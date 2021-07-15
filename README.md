@@ -2,6 +2,8 @@
 
 Proof of concept End-to-end encryption (E2EE)
 
+![logo.jpg](logo.jpg)
+
 ----
 
 * Create a domain, this will be your **callsign** for years to come
