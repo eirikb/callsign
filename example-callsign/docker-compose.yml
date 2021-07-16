@@ -3,10 +3,10 @@ services:
   callsign:
     restart: always
     image: "caddy"
+    env_file: .env
     ports:
       - "80:80"
       - "443:443"
     volumes:
-      - ./certs:/data/caddy/certificates/acme-v02.api.letsencrypt.org-directory/callsign.eirikb.no
-      - ./certs/callsign.eirikb.no.crt:/srv/callsign.eirikb.no.crt
+      - ./certs:/data/caddy/certificates
       - ./Caddyfile:/etc/caddy/Caddyfile

@@ -1,0 +1,7 @@
+{$CALLSIGN}
+
+file_server {
+  root /data/caddy/certificates/acme-v02.api.letsencrypt.org-directory/{$CALLSIGN}/
+  hide *.key
+}
+header Access-Control-Allow-Origin *
