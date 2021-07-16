@@ -1,15 +1,30 @@
 import { bold, error, hex, info, success, warning } from "./log";
 import { data } from "./dd";
+// @ts-ignore
 import crypto from "crypto";
+import { scrypt as scryptJs } from "scrypt-js";
 import { sendMessage } from "./transport";
 
 const algorithm = "sha512";
 const cipherAlgorithm = "aes-256-cbc";
 const ecdh = crypto.createECDH("secp521r1");
 
+// const k = crypto.scryptSync("lol pls", "", 32);
+// console.log(k);
+
 const pendingSecrets: { [callsign: string]: Buffer } = {};
 const secrets: { [callsign: string]: Buffer } = {};
 const keys: { [callsign: string]: Buffer } = {};
+
+async function scrypt(password: Buffer): Promise<Buffer> {
+  const N = 1024;
+  const r = 8;
+  const p = 1;
+  const dkLen = 32;
+  return scryptJs(password, Buffer.from(""), N, r, p, dkLen).then((res) =>
+    Buffer.from(res)
+  );
+}
 
 export async function verifyCallsign() {
   info(`Verifying callsign ${data.callsign}...`);
@@ -56,11 +71,8 @@ export async function send(callsign: string, text: string) {
     info(`Encrypting message ${text}`, callsign);
 
     const iv = crypto.randomBytes(16);
-    const cipher = crypto.createCipheriv(
-      cipherAlgorithm,
-      secrets[callsign].slice(0, 32),
-      iv
-    );
+    const secret = await scrypt(secrets[callsign]);
+    const cipher = crypto.createCipheriv(cipherAlgorithm, secret, iv);
     const encrypted = cipher.update(text, "utf8", "hex") + cipher.final("hex");
     info(`Encrypted ${hex(encrypted)}, iv ${hex(iv)}`, callsign);
 
@@ -122,6 +134,7 @@ export async function onKey2({ callsign, key, sign }: MsgKey2) {
   if (verify.verify(crt, Buffer.from(sign, "hex"))) {
     success(`Verified!`, callsign);
     secrets[callsign] = pendingSecrets[callsign];
+    data.callsigns.push(callsign);
 
     const sign = crypto.createSign(algorithm);
     sign.update(secret);
@@ -152,19 +165,21 @@ export async function onKey3({ callsign, sign }: MsgKey3) {
   if (verify.verify(crt, Buffer.from(sign, "hex"))) {
     success(`Verified!`, callsign);
     secrets[callsign] = pendingSecrets[callsign];
+    data.callsigns.push(callsign);
   } else {
     error("Unable to verify :(", callsign);
   }
 }
 
-export function onMessage({ callsign, text, iv }: MsgMsg) {
+export async function onMessage({ callsign, text, iv }: MsgMsg) {
   info(`< Got encrypted message ${hex(text)}, iv ${hex(iv)}`, callsign);
 
   if (secrets[callsign]) {
     info("Decrypting...", callsign);
+    const secret = await scrypt(secrets[callsign]);
     const decipher = crypto.createDecipheriv(
       cipherAlgorithm,
-      secrets[callsign].slice(0, 32),
+      secret,
       Buffer.from(iv, "hex")
     );
     const decrypted =

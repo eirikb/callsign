@@ -2,7 +2,7 @@
   "name": "callsign",
   "author": "Eirik Brandtzæg",
   "scripts": {
-    "start": "parcel index.html"
+    "start": "parcel src/index.html"
   },
   "license": "MIT",
   "devDependencies": {
@@ -12,6 +12,7 @@
   },
   "dependencies": {
     "@eirikb/domdom": "^8.0.13",
-    "firebase": "^8.7.1"
+    "firebase": "^8.7.1",
+    "scrypt-js": "^3.0.1"
   }
 }

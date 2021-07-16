@@ -1,7 +1,7 @@
 // @ts-ignore
 import { onMessage, sendMessage } from "./transport";
 import { data, don, init, on, pathOf, React } from "./dd";
-import { toColor } from "./log";
+import { error, toColor } from "./log";
 import * as e2ee from "./e2ee";
 
 function saveToStore(
@@ -13,14 +13,20 @@ function saveToStore(
   s.setItem(pathOf().store.$path, store);
 }
 
-async function verifyCallsign(e: Event) {
-  e.preventDefault();
+function event(cb: (target: EventTarget | null) => Promise<void>) {
+  return (e: Event) => {
+    e.preventDefault();
+    cb(e.target).catch(error);
+  };
+}
+
+async function verifyCallsign(target: EventTarget | null): Promise<void> {
   // @ts-ignore
-  const callsign = e.target.callsign.value;
+  const callsign = target.callsign.value;
   // @ts-ignore
-  const key = e.target.key.value;
+  const key = target.key.value;
   // @ts-ignore
-  const store = e.target.store.value;
+  const store = target.store.value;
   saveToStore(localStorage, { callsign: "", key: "", store: "" });
   saveToStore(sessionStorage, { callsign: "", key: "", store: "" });
   if (store === "localStorage")
@@ -32,40 +38,37 @@ async function verifyCallsign(e: Event) {
   data.key = key;
   data.store = store;
 
-  await e2ee.verifyCallsign(callsign, key);
+  await e2ee.verifyCallsign();
 }
 
-async function connectToCallsign(e: Event) {
-  e.preventDefault();
+async function connectToCallsign(target: EventTarget | null) {
   // @ts-ignore
-  const callsign = e.target.callsign.value;
+  const callsign = target.callsign.value;
   await e2ee.connectToCallsign(callsign);
 }
 
-async function send(e: Event) {
-  e.preventDefault();
+async function send(target: EventTarget | null) {
   // @ts-ignore
-  const callsign = e.target.callsign.value;
+  const callsign = target.callsign.value;
   // @ts-ignore
-  const text = e.target.text.value;
+  const text = target.text.value;
   await e2ee.send(callsign, text);
 }
 
 const Init = () => (
-  <form onsubmit={(e) => verifyCallsign(e)}>
+  <form onsubmit={event(verifyCallsign)}>
     <div>
-      <label>
-        Callsign:
-        <input name="callsign" type="text" value={data.callsign} />
-      </label>
+      <input
+        name="callsign"
+        type="text"
+        value={data.callsign}
+        placeholder="Callsign"
+      />
     </div>
     <div>
-      <label>
-        Key:
-        <textarea name="key" cols="30" rows="10">
-          {data.key}
-        </textarea>
-      </label>
+      <textarea name="key" cols="30" rows="10" placeholder="Key">
+        {data.key}
+      </textarea>
     </div>
     <div>
       {["localStorage", "sessionStorage", "none"].map((store) => (
@@ -100,21 +103,28 @@ const Init = () => (
 const Chat = () => (
   <div>
     Welcome {data.callsign}
-    <form onsubmit={(e) => connectToCallsign(e)}>
+    <form onsubmit={event(connectToCallsign)}>
       <div>Connect to callsign:</div>
       <div>
-        <input name="callsign" type="text" />
+        <input name="callsign" type="text" placeholder="Callsign" />
         <button type="submit">Connect</button>
       </div>
     </form>
-    <form onsubmit={(e) => send(e)}>
-      <div>Send a message:</div>
-      <div>
-        <input name="callsign" type="text" />
-        <input name="text" type="text" />
-        <button type="submit">Send</button>
-      </div>
-    </form>
+    <div>Send a message:</div>
+    {don(pathOf().callsigns.$).map<string>((callsign) => (
+      <form onsubmit={event(send)}>
+        <div>
+          <input
+            name="callsign"
+            type="text"
+            placeholder="Callsign"
+            value={callsign}
+          />
+          <input name="text" type="text" placeholder="Text" />
+          <button type="submit">Send</button>
+        </div>
+      </form>
+    ))}
   </div>
 );
 

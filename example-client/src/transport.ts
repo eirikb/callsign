@@ -3,6 +3,7 @@
 
 import firebase from "firebase";
 import "firebase/firestore";
+import { error } from "./log";
 
 const firebaseConfig = {
   apiKey: "AIzaSyDAdFbdaEjLk_qQwGGZGKYur5OghPwNIeE",
@@ -40,6 +41,10 @@ export const onMessage = <T>(
     .onSnapshot((snapshot) =>
       snapshot.forEach((d) => {
         const m = d.data() as Message<T>;
-        if (m.type === type && m.data) cb(m.data);
+        try {
+          if (m.type === type && m.data) cb(m.data);
+        } catch (e) {
+          error(e);
+        }
       })
     );

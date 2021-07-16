@@ -45,4 +45,5 @@ interface Data {
   verified: boolean;
   log: Log[];
   panel: Panel;
+  callsigns: string[];
 }

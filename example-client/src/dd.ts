@@ -10,6 +10,7 @@ const dd = domdom<Data>({
   verified: false,
   panel: "init",
   log: [],
+  callsigns: [],
 });
 
 export const React = dd.React;
