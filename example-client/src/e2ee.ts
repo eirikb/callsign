@@ -9,9 +9,6 @@ const algorithm = "sha512";
 const cipherAlgorithm = "aes-256-cbc";
 const ecdh = crypto.createECDH("secp521r1");
 
-// const k = crypto.scryptSync("lol pls", "", 32);
-// console.log(k);
-
 const pendingSecrets: { [callsign: string]: Buffer } = {};
 const secrets: { [callsign: string]: Buffer } = {};
 const keys: { [callsign: string]: Buffer } = {};

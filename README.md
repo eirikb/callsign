@@ -86,6 +86,8 @@ You can, but I don't trust you.
 
 ## How it works
 
+Please see [e2ee.ts](example-client/src/e2ee.ts) code for implementation reference.
+
 ![Sequence diagra](https://kroki.io/seqdiag/svg/eNqNUUsKwjAQ3fcUg1upF_Cz9QCCG3GRxmkdrC0mASni3U2TNJ9Wi5tAMu8z70Xi40KsgldWtAXkO32ealZgvV3ssUHBFEI_uWG3OK8diNXEcYD5aWaex2OvIpELVFCK9g7_cux0BnmgqgkoeJK6gkBWm6cV11aW3Btucki4gbZ0ElKr9SlnuohTxNtZRmIduAo4CkUlcS3ht0nAU8sjCiq7UZpIJ9kaWMWokco0a3fUPlNR05dr37ZF7K7vo6rGLWNz8SxbUub_Iwj8Dmyxmzxgv3-nyxztlAY26eK4roEh8PsD2xj3dw==)
 
 ## Background
