@@ -28,7 +28,17 @@ You must trust:
 
 ## Demo
 
-TODO: DEMO
+**https://eirikb.github.io/callsign/**
+
+![demo.png](demo.png)
+
+* Working demo
+* You need two sites with callsign
+    * HTTPS enabled, certificate located at `https://<callsign>/<callsign>.crt`.
+    * Private key of each certificate at hand. If you use the [example-callsign](example-callsign) setup you can find
+      the key under `cert` folder (see [docker-compose.yml](example-callsign/docker-compose.yml))
+* Using [Firebase](https://firebase.google.com) as communication channel.  
+  This could be anything from Azure Web PubSub to Kafka, doesn't matter, they _can't snoop_.
 
 ## Pros
 
