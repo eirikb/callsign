@@ -18,7 +18,7 @@ jobs:
       - run: |
           cd example-client
           npm i
-          ./node_modules/.bin/parcel build src/index.html
+          ./node_modules/.bin/parcel build src/index.html --public-url .
 
       - name: GitHub Pages
         uses: crazy-max/ghaction-github-pages@v2.5.0
