@@ -2,7 +2,7 @@ name: GH Pages
 
 on:
   push:
-    branches: [ features/init ]
+    branches: [ feature/init ]
   workflow_dispatch:
 
 jobs:
