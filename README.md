@@ -84,6 +84,10 @@ Subdomains should work just as well.
 
 You can, but I don't trust you.
 
+> You mentioned TOR, wouldn't this work very well with personal .onion-sites?
+
+Yes, yes it would.
+
 ## How it works
 
 Please see [e2ee.ts](example-client/src/e2ee.ts) code for implementation reference.
