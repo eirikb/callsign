@@ -1,7 +1,7 @@
 // @ts-ignore
 import { onMessage, sendMessage } from "./transport";
 import { data, don, init, on, pathOf, React } from "./dd";
-import { error, toColor } from "./log";
+import { createLogger, toColor } from "./log";
 import * as e2ee from "./e2ee";
 
 function saveToStore(
@@ -13,14 +13,20 @@ function saveToStore(
   s.setItem(pathOf().store.$path, store);
 }
 
-function event(cb: (target: EventTarget | null) => Promise<void>) {
+function event(
+  cb: (logger: Logger, target: EventTarget | null) => Promise<void>
+) {
   return (e: Event) => {
     e.preventDefault();
-    cb(e.target).catch(error);
+    const logger = createLogger(e.target?.["callsign"]?.value);
+    cb(logger, e.target).catch(logger.error);
   };
 }
 
-async function verifyCallsign(target: EventTarget | null): Promise<void> {
+async function verifyCallsign(
+  logger: Logger,
+  target: EventTarget | null
+): Promise<void> {
   // @ts-ignore
   const callsign = target.callsign.value;
   // @ts-ignore
@@ -38,21 +44,21 @@ async function verifyCallsign(target: EventTarget | null): Promise<void> {
   data.key = key;
   data.store = store;
 
-  await e2ee.verifyCallsign();
+  await e2ee.verifyCallsign(logger);
 }
 
-async function connectToCallsign(target: EventTarget | null) {
+async function connectToCallsign(logger, target: EventTarget | null) {
   // @ts-ignore
   const callsign = target.callsign.value;
-  await e2ee.connectToCallsign(callsign);
+  await e2ee.connectToCallsign(logger, callsign);
 }
 
-async function send(target: EventTarget | null) {
+async function send(logger: Logger, target: EventTarget | null) {
   // @ts-ignore
   const callsign = target.callsign.value;
   // @ts-ignore
   const text = target.text.value;
-  await e2ee.send(callsign, text);
+  await e2ee.send(logger, callsign, text);
 }
 
 const Init = () => (

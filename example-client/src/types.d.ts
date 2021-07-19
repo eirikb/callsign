@@ -1,5 +1,5 @@
 type MessageType = "key" | "key2" | "key3" | "msg";
-type LogLevel = "bold" | "info" | "success" | "warning" | "error";
+type LogLevel = "info" | "important" | "success" | "warning" | "error";
 type Panel = "init" | "chat";
 type Store = "localStorage" | "sessionStorage" | "none";
 
@@ -46,4 +46,16 @@ interface Data {
   log: Log[];
   panel: Panel;
   callsigns: string[];
+}
+
+interface Logger {
+  info(text: string);
+
+  important(text: string);
+
+  warning(text: string);
+
+  error(text: string);
+
+  success(text: string);
 }

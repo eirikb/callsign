@@ -3,7 +3,7 @@
 
 import firebase from "firebase";
 import "firebase/firestore";
-import { error } from "./log";
+import { createLogger } from "./log";
 
 const firebaseConfig = {
   apiKey: "AIzaSyDAdFbdaEjLk_qQwGGZGKYur5OghPwNIeE",
@@ -31,7 +31,7 @@ export const sendMessage = async <T>(
 export const onMessage = <T>(
   channel: string,
   type: MessageType,
-  cb: (message: T) => void
+  cb: (logger: Logger, message: T) => void
 ) =>
   db
     .collection(channel)
@@ -41,10 +41,11 @@ export const onMessage = <T>(
     .onSnapshot((snapshot) =>
       snapshot.forEach((d) => {
         const m = d.data() as Message<T>;
+        const logger = createLogger(m.data["callsign"]);
         try {
-          if (m.type === type && m.data) cb(m.data);
+          if (m.type === type && m.data) cb(logger, m.data);
         } catch (e) {
-          error(e);
+          logger.error(e);
         }
       })
     );

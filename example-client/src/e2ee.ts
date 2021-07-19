@@ -1,9 +1,9 @@
-import { bold, error, hex, info, success, warning } from "./log";
 import { data } from "./dd";
 // @ts-ignore
 import crypto from "crypto";
 import { scrypt as scryptJs } from "scrypt-js";
 import { sendMessage } from "./transport";
+import { hex } from "./log";
 
 const algorithm = "sha512";
 const cipherAlgorithm = "aes-256-cbc";
@@ -23,85 +23,81 @@ async function scrypt(password: Buffer): Promise<Buffer> {
   );
 }
 
-export async function verifyCallsign() {
-  info(`Verifying callsign ${data.callsign}...`);
+export async function verifyCallsign(logger: Logger) {
+  logger.info(`Verifying callsign ${data.callsign}...`);
   const crt = await fetch(
     ` https://${data.callsign}/${data.callsign}.crt`
   ).then((res) => res.text());
-  info("Got cert");
+  logger.info("Got cert");
 
   const message = "Hello, world!";
   const sign = crypto.createSign(algorithm);
   sign.update(message);
   const sig = sign.sign(data.key);
-  info(`Signed ${hex(sig)}`);
+  logger.info(`Signed ${hex(sig)}`);
 
   const verify = crypto.createVerify(algorithm);
   verify.update(message);
   data.verified = verify.verify(crt, sig);
   if (data.verified) {
-    success(`Verified: ${data.verified}`);
+    logger.success(`Verified: ${data.verified}`);
   } else {
-    error(`Verified: ${data.verified}`);
+    logger.error(`Verified: ${data.verified}`);
   }
 }
 
-export async function connectToCallsign(callsign: string) {
-  info(`Connecting to ${callsign}...`);
-  try {
-    const key = ecdh.generateKeys();
-    keys[callsign] = key;
-    info(`Created key ${hex(key)}`, callsign);
+export async function connectToCallsign(logger: Logger, callsign: string) {
+  logger.info(`Connecting to ${callsign}...`);
+  const key = ecdh.generateKeys();
+  keys[callsign] = key;
+  logger.info(`Created key ${hex(key)}`);
 
-    info(`> Sending key...`, callsign);
-    await sendMessage<MsgKey>(callsign, "key", {
-      key: key.toString("hex"),
-      callsign: data.callsign,
-    });
-  } catch (e) {
-    error(`Failed: ${e}`, callsign);
-  }
+  logger.info(`> Sending key...`);
+  await sendMessage<MsgKey>(callsign, "key", {
+    key: key.toString("hex"),
+    callsign: data.callsign,
+  });
 }
 
-export async function send(callsign: string, text: string) {
+export async function send(logger: Logger, callsign: string, text: string) {
   if (secrets[callsign]) {
-    info(`Encrypting message ${text}`, callsign);
+    logger.info(`Encrypting message ${text}`);
 
     const iv = crypto.randomBytes(16);
     const secret = await scrypt(secrets[callsign]);
     const cipher = crypto.createCipheriv(cipherAlgorithm, secret, iv);
     const encrypted = cipher.update(text, "utf8", "hex") + cipher.final("hex");
-    info(`Encrypted ${hex(encrypted)}, iv ${hex(iv)}`, callsign);
+    logger.info(`Encrypted ${hex(encrypted)}, iv ${hex(iv)}`);
 
-    info(`> Sending message...`, callsign);
+    logger.info(`> Sending message...`);
     await sendMessage<MsgMsg>(callsign, "msg", {
       callsign: data.callsign,
       text: encrypted,
       iv: iv.toString("hex"),
     });
   } else {
-    warning(`Missing secret, please connect first`, callsign);
+    logger.warning(`Missing secret, please connect first`);
   }
 }
 
-export async function onKey({ callsign, key }: MsgKey) {
-  info(`< Got key ${hex(key)}`, callsign);
+export async function onKey(logger: Logger, { callsign, key }: MsgKey) {
+  logger.info(`< Got key ${hex(key)}`);
 
   const myKey = ecdh.generateKeys();
   keys[callsign] = myKey;
-  info(`Created key ${hex(myKey)}`, callsign);
+  logger.info(`Created key ${hex(myKey)}`);
 
   const secret = ecdh.computeSecret(Buffer.from(key, "hex"));
   pendingSecrets[callsign] = secret;
-  info(`Created secret ${hex(secret)}`, callsign);
+  logger.info(`Created secret ${hex(secret)}`);
 
-  info(`Signing secret...`, callsign);
+  logger.info(`Signing secret...`);
   const sign = crypto.createSign(algorithm);
   sign.update(secret);
   const sig = sign.sign(data.key);
-  info(`Secret signed ${hex(sig)}`, callsign);
+  logger.info(`Secret signed ${hex(sig)}`);
 
-  info(`> Sending key + sign...`, callsign);
+  logger.info(`> Sending key + sign...`);
   await sendMessage<MsgKey2>(callsign, "key2", {
     callsign: data.callsign,
     key: myKey.toString("hex"),
@@ -109,70 +105,73 @@ export async function onKey({ callsign, key }: MsgKey) {
   });
 }
 
-export async function onKey2({ callsign, key, sign }: MsgKey2) {
-  info(`< Got key ${hex(key)} with sign ${hex(sign)}`, callsign);
+export async function onKey2(logger: Logger, { callsign, key, sign }: MsgKey2) {
+  logger.info(`< Got key ${hex(key)} with sign ${hex(sign)}`);
 
   const myKey = keys[callsign];
 
-  info(`Loaded my key ${hex(myKey)}`, callsign);
+  logger.info(`Loaded my key ${hex(myKey)}`);
 
   const secret = ecdh.computeSecret(Buffer.from(key, "hex"));
   pendingSecrets[callsign] = secret;
-  info(`Created secret ${hex(secret)}`, callsign);
+  logger.info(`Created secret ${hex(secret)}`);
 
-  info(`Loading cert for...`, callsign);
+  logger.info(`Loading cert for...`);
   const crt = await fetch(` https://${callsign}/${callsign}.crt`).then((res) =>
     res.text()
   );
-  info("Got cert", callsign);
-  info(`Verifying sign...`, callsign);
+  logger.info("Got cert");
+  logger.info(`Verifying sign...`);
   const verify = crypto.createVerify(algorithm);
   verify.update(secret);
   if (verify.verify(crt, Buffer.from(sign, "hex"))) {
-    success(`Verified!`, callsign);
+    logger.success(`Verified!`);
     secrets[callsign] = pendingSecrets[callsign];
     data.callsigns.push(callsign);
 
     const sign = crypto.createSign(algorithm);
     sign.update(secret);
     const sig = sign.sign(data.key);
-    info(`Secret signed ${hex(sig)}`, callsign);
+    logger.info(`Secret signed ${hex(sig)}`);
 
-    info(`> Sending sign...`, callsign);
+    logger.info(`> Sending sign...`);
     await sendMessage<MsgKey3>(callsign, "key3", {
       sign: sig.toString("hex"),
       callsign: data.callsign,
     });
   } else {
-    error("Unable to verify :(", callsign);
+    logger.error("Unable to verify :(");
   }
 }
 
-export async function onKey3({ callsign, sign }: MsgKey3) {
-  info(`< Got sign ${hex(sign)}`, callsign);
+export async function onKey3(logger: Logger, { callsign, sign }: MsgKey3) {
+  logger.info(`< Got sign ${hex(sign)}`);
 
-  info(`Loading cert for...`, callsign);
+  logger.info(`Loading cert for...`);
   const crt = await fetch(` https://${callsign}/${callsign}.crt`).then((res) =>
     res.text()
   );
-  info("Got cert", callsign);
-  info(`Verifying sign...`, callsign);
+  logger.info("Got cert");
+  logger.info(`Verifying sign...`);
   const verify = crypto.createVerify(algorithm);
   verify.update(pendingSecrets[callsign]);
   if (verify.verify(crt, Buffer.from(sign, "hex"))) {
-    success(`Verified!`, callsign);
+    logger.success(`Verified!`);
     secrets[callsign] = pendingSecrets[callsign];
     data.callsigns.push(callsign);
   } else {
-    error("Unable to verify :(", callsign);
+    logger.error("Unable to verify :(");
   }
 }
 
-export async function onMessage({ callsign, text, iv }: MsgMsg) {
-  info(`< Got encrypted message ${hex(text)}, iv ${hex(iv)}`, callsign);
+export async function onMessage(
+  logger: Logger,
+  { callsign, text, iv }: MsgMsg
+) {
+  logger.info(`< Got encrypted message ${hex(text)}, iv ${hex(iv)}`);
 
   if (secrets[callsign]) {
-    info("Decrypting...", callsign);
+    logger.info("Decrypting...");
     const secret = await scrypt(secrets[callsign]);
     const decipher = crypto.createDecipheriv(
       cipherAlgorithm,
@@ -181,8 +180,8 @@ export async function onMessage({ callsign, text, iv }: MsgMsg) {
     );
     const decrypted =
       decipher.update(text, "hex", "utf8") + decipher.final("utf8");
-    bold(decrypted, callsign);
+    logger.important(decrypted);
   } else {
-    error("No valid session, please connect first", callsign);
+    logger.error("No valid session, please connect first");
   }
 }

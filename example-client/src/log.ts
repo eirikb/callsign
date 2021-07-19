@@ -12,21 +12,6 @@ export const log = (
     text,
   });
 
-export const info = (text: string, callsign: string | undefined = undefined) =>
-  log("info", text, callsign);
-export const bold = (text: string, callsign: string | undefined = undefined) =>
-  log("bold", text, callsign);
-export const warning = (
-  text: string,
-  callsign: string | undefined = undefined
-) => log("warning", text, callsign);
-export const error = (text: string, callsign: string | undefined = undefined) =>
-  log("error", text, callsign);
-export const success = (
-  text: string,
-  callsign: string | undefined = undefined
-) => log("success", text, callsign);
-
 export const toColor = (log: Log) => {
   switch (log.level) {
     case "info":
@@ -46,3 +31,11 @@ export const hex = (data: Buffer | string): string => {
   const s = typeof data === "string" ? data : data.toString("hex");
   return s.slice(0, 5).concat("...").concat(s.slice(-5));
 };
+
+export const createLogger = (callsign: string): Logger => ({
+  info: (text: string) => log("info", text, callsign),
+  success: (text: string) => log("success", text, callsign),
+  important: (text: string) => log("important", text, callsign),
+  warning: (text: string) => log("warning", text, callsign),
+  error: (text: string) => log("error", text, callsign),
+});
