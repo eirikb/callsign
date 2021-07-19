@@ -48,15 +48,18 @@ You must trust:
 * No-code setup. The [demo callsign server](example-callsign) uses [caddy server](https://caddyserver.com), that's it
 * Verification is fully automatic
 * Automatic verification also means no need to re-check any manual verification (such as emoji or QR code)
+* No need for web of trust / authentication servers
+* No need for custom server for communication, key exchange and message passing can be done client-side
 
 ## FAQ
 
-> What makes this different from simply hosting a public GPG key?
+> What makes this different from simply hosting a public GPG key on my own site?
 
-Not much. For one in the demo I use the TLS certificate for verification.  
-This certificate will be CA-verified simply by requesting it (thanks browser).  
-It's also forced to refresh on a given interval.  
-Losing the key to the public might become a bit more serious.
+Not much.
+
+* Standardized setup
+* Using certificate as key. Not sure yet if this is good or bad
+* When using certbot (or alike) public key (certificate) will forcefully be replaced on a given interval
 
 If that "simple hosting" was hosted by someone else there would be a greater difference, since you then would also have
 to trust them.
