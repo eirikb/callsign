@@ -3,32 +3,28 @@ type LogLevel = "info" | "important" | "success" | "warning" | "error";
 type Panel = "init" | "chat";
 type Store = "localStorage" | "sessionStorage" | "none";
 
-interface MsgKey {
-  key: string;
-  callsign: string;
+interface Message {
+  fromCallsign: string;
+  toCallsign: string;
+  type: MessageType;
 }
 
-interface MsgKey2 {
+interface MsgKey extends Message {
+  key: string;
+}
+
+interface MsgKey2 extends Message {
   key: string;
   sign: string;
-  callsign: string;
 }
 
-interface MsgKey3 {
+interface MsgKey3 extends Message {
   sign: string;
-  callsign: string;
 }
 
-interface MsgMsg {
+interface MsgMsg extends Message {
   text: string;
   iv: string;
-  callsign: string;
-}
-
-interface Message<T> {
-  stamp: Date;
-  type: MessageType;
-  data: T;
 }
 
 interface Log {
@@ -46,6 +42,8 @@ interface Data {
   log: Log[];
   panel: Panel;
   callsigns: string[];
+  incoming?: Message;
+  outgoing?: Message;
 }
 
 interface Logger {

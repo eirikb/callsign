@@ -3,7 +3,8 @@
 
 import firebase from "firebase";
 import "firebase/firestore";
-import { createLogger } from "./log";
+
+import { data, on, pathOf } from "./dd";
 
 const firebaseConfig = {
   apiKey: "AIzaSyDAdFbdaEjLk_qQwGGZGKYur5OghPwNIeE",
@@ -17,35 +18,23 @@ firebase.initializeApp(firebaseConfig);
 
 const db = firebase.firestore();
 
-export const sendMessage = async <T>(
-  channel: string,
-  type: MessageType,
-  data: T
-) =>
-  db.collection(channel).add({
-    stamp: firebase.firestore.FieldValue.serverTimestamp(),
-    type,
-    data,
-  });
+on("!+*", pathOf().outgoing!.$path, async (outgoing) => {
+  const m = outgoing as Message;
+  outgoing.stamp = firebase.firestore.FieldValue.serverTimestamp();
+  await db.collection(m.toCallsign).add(outgoing);
+});
 
-export const onMessage = <T>(
-  channel: string,
-  type: MessageType,
-  cb: (logger: Logger, message: T) => void
-) =>
-  db
-    .collection(channel)
-    .where("stamp", ">=", firebase.firestore.Timestamp.now())
-    .limitToLast(1)
-    .orderBy("stamp")
-    .onSnapshot((snapshot) =>
-      snapshot.forEach((d) => {
-        const m = d.data() as Message<T>;
-        const logger = createLogger(m.data["callsign"]);
-        try {
-          if (m.type === type && m.data) cb(logger, m.data);
-        } catch (e) {
-          logger.error(e);
-        }
-      })
-    );
+on("!+*", pathOf().verified, (verified) => {
+  if (verified) {
+    db.collection(data.callsign)
+      .where("stamp", ">=", firebase.firestore.Timestamp.now())
+      .limitToLast(1)
+      .orderBy("stamp")
+      .onSnapshot((snapshot) =>
+        snapshot.forEach((d) => {
+          data.incoming = d.data() as Message;
+          data.incoming = undefined;
+        })
+      );
+  }
+});
