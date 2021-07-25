@@ -129,3 +129,15 @@ Then I wondered if I could utilize Let's Encrypt certificates. They are great be
 So it came to be; why not simply host a Let's Encrypt certificate and sign a key from key exchange with the Let's
 Encrypt key. Then users could verify the key using the certificate.
 
+## Firefox extension Demo
+
+See [example-firefox-extension](example-firefox-extension) for example Firefox extension.  
+This extension can be used to prove secure communication on other platforms, such as Teams.  
+Example from real world demo on Teams:  
+![teams.png](teams.png)
+
+The extension is very manual; copy/paste from/to output/input.  
+In the example image above output/input was passed via Teams chat, to prove both secure key exchange and message
+exchange.  
+Domain certification is fetched inside the extension. Key exchange and message exchange is done via Teams, without
+Microsoft being able to snoop.
