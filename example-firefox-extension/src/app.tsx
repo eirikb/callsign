@@ -8,53 +8,57 @@ init(
     {don(pathOf().panel).map<Panel>((panel) => {
       switch (panel) {
         case "chat":
-          return <Chat />;
+          return (
+            <div>
+              <Chat />
+              <hr />
+              <b>Incoming:</b>
+              <div>
+                <form
+                  onSubmit={(e) => {
+                    e.preventDefault();
+                    const incoming = e.target.incoming.value;
+                    try {
+                      data.incoming = JSON.parse(incoming);
+                      data.incoming = undefined;
+                      e.target.incoming.value = "";
+                    } catch (e) {
+                      createLogger("").error(e);
+                    }
+                  }}
+                >
+                  <input name="incoming" type="text" />
+                  <button>Process</button>
+                </form>
+              </div>
+              <b>Outgoing:</b>
+              <div>
+                {don(pathOf().outgoing!).map((outgoing) => {
+                  const input = (
+                    <input type="text" value={JSON.stringify(outgoing)} />
+                  );
+                  return (
+                    <div>
+                      {input}
+                      <button
+                        type="button"
+                        onClick={() => {
+                          input.select();
+                          document.execCommand("copy");
+                        }}
+                      >
+                        Copy
+                      </button>
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+          );
         default:
           return <Init />;
       }
     })}
-    <hr />
-
-    <b>Incoming:</b>
-    <div>
-      <form
-        onSubmit={(e) => {
-          e.preventDefault();
-          const incoming = e.target.incoming.value;
-          try {
-            data.incoming = JSON.parse(incoming);
-            data.incoming = undefined;
-            e.target.incoming.value = "";
-          } catch (e) {
-            createLogger("").error(e);
-          }
-        }}
-      >
-        <input name="incoming" type="text" />
-        <button>Process</button>
-      </form>
-    </div>
-    <b>Outgoing:</b>
-    <div>
-      {don(pathOf().outgoing!).map((outgoing) => {
-        const input = <input type="text" value={JSON.stringify(outgoing)} />;
-        return (
-          <div>
-            {input}
-            <button
-              type="button"
-              onClick={() => {
-                input.select();
-                document.execCommand("copy");
-              }}
-            >
-              Copy
-            </button>
-          </div>
-        );
-      })}
-    </div>
-
     <hr />
     <div>
       {don(pathOf().log.$).map<Log>((log) => (
