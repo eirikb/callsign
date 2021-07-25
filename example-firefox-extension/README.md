@@ -1,11 +1,8 @@
-Example client
+Example Firefox extension
 
-This is also the client hosted at https://eirikb.github.io/callsign .  
-Using Firebase, but could use anything.
+For now this is a _very_ manual demo.  
+You must copy content from "output" and paste into "input" of another extension.  
+This can be used to demo the key exchange and messaging in any other app,  
+such as Teams of Discord.
 
-Run locally (for dev):
-
-```bash
-npm i
-npm start
-```
+Verification of domain is done inside the extension, this could be faked if not, because I don't know any way to securely verify that `fetch` is the native one.
