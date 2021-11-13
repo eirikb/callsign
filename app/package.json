@@ -1,0 +1,16 @@
+{
+  "scripts": {
+    "start": "parcel src/index.html"
+  },
+  "devDependencies": {
+    "parcel": "^2.0.1",
+    "postcss": "^8.3.11",
+    "postcss-import": "^14.0.2"
+  },
+  "dependencies": {
+    "@eirikb/domdom": "^9.1.0",
+    "firebase": "^9.4.0",
+    "scrypt-js": "^3.0.1",
+    "tailwindcss": "^2.2.19"
+  }
+}
