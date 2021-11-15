@@ -3,6 +3,15 @@ import { fetchCert, normalizeKey, verifyCert } from "./e2ee";
 
 async function submit(event: Event) {
   event.preventDefault();
+  await connect();
+}
+
+async function connect() {
+  if (data.home.store) {
+    localStorage.setItem("home", JSON.stringify(data.home));
+  } else {
+    localStorage.removeItem("home");
+  }
 
   data.home.connecting = true;
   data.home.status = "black";
@@ -30,6 +39,13 @@ async function submit(event: Event) {
 }
 
 export const Home = () => {
+  try {
+    data.home = JSON.parse(localStorage.getItem("home") ?? "");
+    if (data.home.key) {
+      connect();
+    }
+  } catch (ignored) {}
+
   return (
     <div class="flex h-screen">
       <div class="m-auto">
@@ -70,6 +86,10 @@ export const Home = () => {
                   class="block p-1 mt-3 rounded-lg bg-gray-100 shadow-md focus:outline-none focus:border-2 border-cyan-500"
                 />
                 <div class="text-gray-500">Password managers supported</div>
+                <label class="text-gray-500">
+                  <input type="checkbox" bind={path().home.store.$path} /> Save
+                  details locally
+                </label>
               </div>
               <button
                 type="submit"
@@ -93,6 +113,14 @@ export const Home = () => {
             >
               Create test callsign
             </button>
+          </div>
+          <div>
+            <a
+              href="https://github.com/eirikb/callsign#callsign"
+              target="_blank"
+            >
+              How it works
+            </a>
           </div>
         </div>
       </div>

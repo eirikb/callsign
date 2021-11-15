@@ -21,7 +21,6 @@ const firebaseConfig = {
 const app = initializeApp(firebaseConfig);
 
 const db = initializeFirestore(app, {});
-console.log(db);
 
 on("!+*", path().outgoing!.$path, async (outgoing) => {
   const m = outgoing as Message;

@@ -44,7 +44,7 @@ interface Home {
 }
 
 interface Data {
-  panel: "init" | "main";
+  panel: "main" | "home";
   home: Home;
 }
 
