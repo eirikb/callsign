@@ -4,7 +4,7 @@ const getItem = (key: string, or: string): string =>
   localStorage.getItem(key) || sessionStorage.getItem(key) || or;
 
 const dd = domdom<Data>({
-  panel: "init",
+  panel: "home",
   home: {
     store: getItem("store", "false") === "true",
     callsign: getItem("callsign", ""),
@@ -12,6 +12,9 @@ const dd = domdom<Data>({
     connecting: false,
     status: "black",
     info: "",
+  },
+  main: {
+    sessions: [],
   },
 });
 

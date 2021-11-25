@@ -1,4 +1,4 @@
-import { React } from "./dd";
+import { don, data, path, React } from "./dd";
 
 export const Main = () => (
   <div class="flex h-screen text-gray-800">
@@ -21,16 +21,18 @@ export const Main = () => (
               ></path>
             </svg>
           </div>
-          <div class="ml-2 font-bold text-2xl">Callsign</div>
+          <div class="ml-2 font-bold text-2xl">{don(path().home.callsign)}</div>
         </div>
         <div class="flex flex-col mt-8">
           <div class="flex flex-col space-y-1 mt-4 -mx-2 h-48 overflow-y-auto">
-            <button class="flex flex-row items-center hover:bg-gray-100 rounded-xl p-2">
-              <div class="flex items-center justify-center h-8 w-8 bg-indigo-200 rounded-full">
-                E
-              </div>
-              <div class="ml-2 text-sm font-semibold">Eh</div>
-            </button>
+            {don(path().main.sessions.$).map((s) => (
+              <button class="flex flex-row items-center hover:bg-gray-100 rounded-xl p-2">
+                <div class="flex items-center justify-center h-8 w-8 bg-indigo-200 rounded-full">
+                  {s.callsign.slice(0, 1)}
+                </div>
+                <div class="ml-2 text-sm font-semibold">{s.callsign}</div>
+              </button>
+            ))}
           </div>
         </div>
       </div>
@@ -39,26 +41,49 @@ export const Main = () => (
           <div class="flex flex-col h-full overflow-x-auto mb-4">
             <div class="flex flex-col h-full">
               <div class="grid grid-cols-12 gap-y-2">
-                <div class="col-start-1 col-end-8 p-3 rounded-lg">
-                  <div class="flex flex-row items-center">
-                    <div class="flex items-center justify-center h-10 w-10 rounded-full bg-indigo-500 flex-shrink-0">
-                      A
-                    </div>
-                    <div class="relative ml-3 text-sm bg-white py-2 px-4 shadow rounded-xl">
-                      <div>Hey How are you today?</div>
-                    </div>
-                  </div>
-                </div>
-                <div class="col-start-6 col-end-13 p-3 rounded-lg">
-                  <div class="flex items-center justify-start flex-row-reverse">
-                    <div class="flex items-center justify-center h-10 w-10 rounded-full bg-indigo-500 flex-shrink-0">
-                      A
-                    </div>
-                    <div class="relative mr-3 text-sm bg-indigo-100 py-2 px-4 shadow rounded-xl">
-                      <div>I'm ok what about you?</div>
-                    </div>
-                  </div>
-                </div>
+                {don(path().main.sessions.$)
+                  .filter((s) => s.visible)
+                  .map((s) =>
+                    don(path(s).messages.$).map((m) => {
+                      switch (m.direction) {
+                        case "from":
+                          return (
+                            <div class="col-start-1 col-end-8 p-3 rounded-lg">
+                              <div class="flex flex-row items-center">
+                                <div class="flex items-center justify-center h-10 w-10 rounded-full bg-indigo-500 flex-shrink-0">
+                                  {data.home.callsign.slice(0, 1)}
+                                </div>
+                                <div class="relative ml-3 text-sm bg-white py-2 px-4 shadow rounded-xl">
+                                  <div>{m.text}</div>
+                                </div>
+                              </div>
+                            </div>
+                          );
+                        case "to":
+                          return (
+                            <div class="col-start-6 col-end-13 p-3 rounded-lg">
+                              <div class="flex items-center justify-start flex-row-reverse">
+                                <div class="flex items-center justify-center h-10 w-10 rounded-full bg-indigo-500 flex-shrink-0">
+                                  {s.callsign.slice(0, 1)}
+                                </div>
+                                <div class="relative mr-3 text-sm bg-indigo-100 py-2 px-4 shadow rounded-xl">
+                                  <div>{m.text}</div>
+                                </div>
+                              </div>
+                            </div>
+                          );
+
+                        default:
+                          return (
+                            <div class="col-start-1 col-end-8 p-3 rounded-lg">
+                              <div class="flex items-center justify-start flex-row-reverse">
+                                <div>INTER MEDI ATE</div>
+                              </div>
+                            </div>
+                          );
+                      }
+                    })
+                  )}
               </div>
             </div>
           </div>
