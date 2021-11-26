@@ -45,6 +45,10 @@ export function verifyCert(cert: string, key: string) {
   return false;
 }
 
+export function generateKey() {
+  return ecdh.generateKeys();
+}
+
 // export async function verifyCallsign(logger: Logger) {
 //   logger.info(`Verifying callsign ${data.callsign}...`);
 //   const crt = await fetch(

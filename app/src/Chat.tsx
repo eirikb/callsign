@@ -1,31 +1,45 @@
 import { don, data, path, React } from "./dd";
 
-export const Main = () => (
+function connect(e: Event) {
+  e.preventDefault();
+  const s = data.chat.sessions.find((s) => s.visible);
+  if (s != null) s.visible = false;
+
+  data.chat.sessions.push({
+    visible: true,
+    lines: [],
+    direction: "outgoing",
+    callsign: data.chat.callsignToConnectTo,
+    outgoing: undefined,
+    incoming: undefined,
+  });
+
+  data.chat.callsignToConnectTo = "";
+}
+
+export const Chat = () => (
   <div class="flex h-screen text-gray-800">
     <div class="flex flex-row h-full w-full overflow-x-hidden">
       <div class="flex flex-col py-8 pl-6 pr-2 w-64 bg-white flex-shrink-0">
         <div class="flex flex-row items-center justify-center h-12 w-full">
-          <div class="flex items-center justify-center rounded-2xl text-indigo-700 bg-indigo-100 h-10 w-10">
-            <svg
-              class="w-6 h-6"
-              fill="none"
-              stroke="currentColor"
-              viewBox="0 0 24 24"
-              xmlns="http://www.w3.org/2000/svg"
-            >
-              <path
-                stroke-linecap="round"
-                stroke-linejoin="round"
-                stroke-width="2"
-                d="M8 10h.01M12 10h.01M16 10h.01M9 16H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-5l-5 5v-5z"
-              ></path>
-            </svg>
-          </div>
-          <div class="ml-2 font-bold text-2xl">{don(path().home.callsign)}</div>
+          <div class="ml-2 font-bold text-xl">{don(path().home.callsign)}</div>
         </div>
+        <form class="ml-2" onSubmit={connect}>
+          <label>New Session</label>
+          <input
+            required
+            bind={path().chat.callsignToConnectTo.$path}
+            class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline"
+            type="text"
+            placeholder="Callsign"
+          />
+          <button class="bg-gray-100 mt-2 text-gray-700 text-base font-semibold px-6 py-2 rounded-lg">
+            Connect
+          </button>
+        </form>
         <div class="flex flex-col mt-8">
           <div class="flex flex-col space-y-1 mt-4 -mx-2 h-48 overflow-y-auto">
-            {don(path().main.sessions.$).map((s) => (
+            {don(path().chat.sessions.$).map((s) => (
               <button class="flex flex-row items-center hover:bg-gray-100 rounded-xl p-2">
                 <div class="flex items-center justify-center h-8 w-8 bg-indigo-200 rounded-full">
                   {s.callsign.slice(0, 1)}
@@ -41,11 +55,11 @@ export const Main = () => (
           <div class="flex flex-col h-full overflow-x-auto mb-4">
             <div class="flex flex-col h-full">
               <div class="grid grid-cols-12 gap-y-2">
-                {don(path().main.sessions.$)
+                {don(path().chat.sessions.$)
                   .filter((s) => s.visible)
                   .map((s) =>
-                    don(path(s).messages.$).map((m) => {
-                      switch (m.direction) {
+                    don(path(s).lines.$).map((m) => {
+                      switch (m.type) {
                         case "from":
                           return (
                             <div class="col-start-1 col-end-8 p-3 rounded-lg">
@@ -77,7 +91,7 @@ export const Main = () => (
                           return (
                             <div class="col-start-1 col-end-8 p-3 rounded-lg">
                               <div class="flex items-center justify-start flex-row-reverse">
-                                <div>INTER MEDI ATE</div>
+                                <div>{m.text}</div>
                               </div>
                             </div>
                           );

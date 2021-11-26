@@ -2,11 +2,7 @@
 // Medium of transporting messages doesn't matter, they can't snoop
 
 import { initializeApp } from "firebase/app";
-import {
-  initializeFirestore,
-  serverTimestamp,
-  Timestamp,
-} from "firebase/firestore";
+import { getDatabase, remove, set, ref, onValue } from "firebase/database";
 
 import { data, on, path } from "./dd";
 
@@ -17,28 +13,56 @@ const firebaseConfig = {
   storageBucket: "callsign-c0af8.appspot.com",
   messagingSenderId: "858960654551",
   appId: "1:858960654551:web:8cc6532ef2e37117b88092",
+  databaseURL:
+    "https://callsign-c0af8-default-rtdb.europe-west1.firebasedatabase.app/",
 };
 const app = initializeApp(firebaseConfig);
 
-const db = initializeFirestore(app, {});
+const db = getDatabase(app);
 
-on("!+*", path().outgoing!.$path, async (outgoing) => {
-  const m = outgoing as Message;
-  outgoing.stamp = serverTimestamp();
-  await db.collection(m.toCallsign).add(outgoing);
+function normalize(name: string) {
+  return name.replace(/\./g, "__");
+}
+
+on("!+*", path().chat.sessions.$.outgoing, async (outgoing, { $ }) => {
+  const session = data.chat.sessions[$];
+  try {
+    await set(
+      ref(db, normalize(session.callsign)),
+      JSON.parse(JSON.stringify(outgoing))
+    );
+  } catch (e) {
+    console.error(e);
+    session.lines.push({
+      text: "Fail: " + e,
+      type: "error",
+    });
+  }
 });
 
-on("!+*", path().verified, (verified) => {
-  if (verified) {
-    db.collection(data.callsign)
-      .where("stamp", ">=", Timestamp.now())
-      .limitToLast(1)
-      .orderBy("stamp")
-      .onSnapshot((snapshot) =>
-        snapshot.forEach((d) => {
-          data.incoming = d.data() as Message;
-          data.incoming = undefined;
-        })
-      );
+on("+!*", path().home.callsign, (callsign) => {
+  if (callsign) {
+    onValue(ref(db, normalize(callsign)), (snapshot) => {
+      remove(ref(db, normalize(callsign)));
+
+      const val = snapshot.val();
+      if (val) {
+        const session = data.chat.sessions.find(
+          (s) => s.callsign === val.fromCallsign
+        );
+        if (session) {
+          session.incoming = val;
+        } else {
+          data.chat.sessions.push({
+            callsign: val.fromCallsign,
+            lines: [],
+            direction: "incoming",
+            visible: false,
+            outgoing: undefined,
+            incoming: val,
+          });
+        }
+      }
+    });
   }
 });

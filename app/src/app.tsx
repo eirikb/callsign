@@ -9,8 +9,9 @@ import "./style.css";
 
 import { don, data, init, path, React } from "./dd";
 import { Home } from "./Home";
-import { Main } from "./Main";
+import { Chat } from "./Chat";
 import "./transport";
+import "./master-of-chat";
 
 init(
   document.body,
@@ -18,7 +19,7 @@ init(
     {don(path().panel.$path).map((panel) => {
       switch (panel) {
         case "main":
-          return <Main />;
+          return <Chat />;
         default:
           return <Home />;
       }

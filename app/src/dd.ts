@@ -13,7 +13,8 @@ const dd = domdom<Data>({
     status: "black",
     info: "",
   },
-  main: {
+  chat: {
+    callsignToConnectTo: "",
     sessions: [],
   },
 });
