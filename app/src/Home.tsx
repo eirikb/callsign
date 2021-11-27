@@ -24,14 +24,14 @@ async function connect() {
       data.home.status = "green";
       data.home.info = "VERIFIED!";
       setTimeout(() => {
-        data.panel = "main";
+        data.panel = "chat";
       }, 500);
     } else {
       data.home.status = "red";
       data.home.info = "Unable to verify certificate";
     }
   } catch (e) {
-    console.log(e);
+    console.error(e);
     data.home.info = "red";
     data.home.info = "Unable to load cert";
   }

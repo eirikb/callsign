@@ -5,6 +5,7 @@ import { initializeApp } from "firebase/app";
 import { getDatabase, remove, set, ref, onValue } from "firebase/database";
 
 import { data, on, path } from "./dd";
+import { normalize } from "./e2ee";
 
 const firebaseConfig = {
   apiKey: "AIzaSyDAdFbdaEjLk_qQwGGZGKYur5OghPwNIeE",
@@ -19,10 +20,6 @@ const firebaseConfig = {
 const app = initializeApp(firebaseConfig);
 
 const db = getDatabase(app);
-
-function normalize(name: string) {
-  return name.replace(/\./g, "__");
-}
 
 on("!+*", path().chat.sessions.$.outgoing, async (outgoing, { $ }) => {
   const session = data.chat.sessions[$];
@@ -43,24 +40,24 @@ on("!+*", path().chat.sessions.$.outgoing, async (outgoing, { $ }) => {
 on("+!*", path().home.callsign, (callsign) => {
   if (callsign) {
     onValue(ref(db, normalize(callsign)), (snapshot) => {
-      remove(ref(db, normalize(callsign)));
+      set(ref(db, normalize(callsign)), null);
 
       const val = snapshot.val();
       if (val) {
-        const session = data.chat.sessions.find(
-          (s) => s.callsign === val.fromCallsign
-        );
+        console.log("val", val);
+        const session = data.chat.sessions[normalize(val.fromCallsign)];
         if (session) {
           session.incoming = val;
         } else {
-          data.chat.sessions.push({
+          data.chat.sessions[normalize(val.fromCallsign)] = {
             callsign: val.fromCallsign,
             lines: [],
             direction: "incoming",
-            visible: false,
             outgoing: undefined,
             incoming: val,
-          });
+          };
+          // TODO:
+          data.chat.selectedSession = val.fromCallsign;
         }
       }
     });

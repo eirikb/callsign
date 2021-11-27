@@ -1,6 +1,7 @@
 // @ts-ignore
 import crypto from "crypto";
 import { scrypt as scryptJs } from "scrypt-js";
+import { data } from "./dd";
 
 const algorithm = "sha512";
 const cipherAlgorithm = "aes-256-cbc";
@@ -20,6 +21,10 @@ export function fetchCert(callsign: String) {
   return fetch(` https://${callsign}/${callsign}.crt`).then((res) =>
     res.text()
   );
+}
+
+export function normalize(name: string) {
+  return name.replace(/\./g, "__");
 }
 
 export function normalizeKey(key: string) {
@@ -44,9 +49,24 @@ export function verifyCert(cert: string, key: string) {
   } catch (ignored) {}
   return false;
 }
+export function verifyCertSign(cert: string, secret: string, sign: string) {
+  const verify = crypto.createVerify(algorithm);
+  verify.update(secret);
+  return verify.verify(cert, Buffer.from(sign, "hex"));
+}
 
 export function generateKey() {
   return ecdh.generateKeys();
+}
+
+export function generateSecret(key: string) {
+  return ecdh.computeSecret(Buffer.from(key, "hex"));
+}
+
+export function signSecret(secret: string) {
+  const sign = crypto.createSign(algorithm);
+  sign.update(secret);
+  return sign.sign(normalizeKey(data.home.key));
 }
 
 // export async function verifyCallsign(logger: Logger) {

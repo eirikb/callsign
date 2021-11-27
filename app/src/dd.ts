@@ -15,7 +15,8 @@ const dd = domdom<Data>({
   },
   chat: {
     callsignToConnectTo: "",
-    sessions: [],
+    sessions: {},
+    selectedSession: "",
   },
 });
 

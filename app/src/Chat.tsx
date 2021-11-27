@@ -1,20 +1,20 @@
 import { don, data, path, React } from "./dd";
+import { normalize } from "./e2ee";
 
 function connect(e: Event) {
   e.preventDefault();
-  const s = data.chat.sessions.find((s) => s.visible);
-  if (s != null) s.visible = false;
 
-  data.chat.sessions.push({
-    visible: true,
+  const callsign = data.chat.callsignToConnectTo;
+  data.chat.sessions[normalize(callsign)] = {
     lines: [],
     direction: "outgoing",
-    callsign: data.chat.callsignToConnectTo,
+    callsign,
     outgoing: undefined,
     incoming: undefined,
-  });
+  };
 
   data.chat.callsignToConnectTo = "";
+  data.chat.selectedSession = callsign;
 }
 
 export const Chat = () => (
@@ -40,7 +40,10 @@ export const Chat = () => (
         <div class="flex flex-col mt-8">
           <div class="flex flex-col space-y-1 mt-4 -mx-2 h-48 overflow-y-auto">
             {don(path().chat.sessions.$).map((s) => (
-              <button class="flex flex-row items-center hover:bg-gray-100 rounded-xl p-2">
+              <button
+                class="flex flex-row items-center hover:bg-gray-100 rounded-xl p-2"
+                onclick={() => (data.chat.selectedSession = s.callsign)}
+              >
                 <div class="flex items-center justify-center h-8 w-8 bg-indigo-200 rounded-full">
                   {s.callsign.slice(0, 1)}
                 </div>
@@ -55,49 +58,64 @@ export const Chat = () => (
           <div class="flex flex-col h-full overflow-x-auto mb-4">
             <div class="flex flex-col h-full">
               <div class="grid grid-cols-12 gap-y-2">
-                {don(path().chat.sessions.$)
-                  .filter((s) => s.visible)
-                  .map((s) =>
-                    don(path(s).lines.$).map((m) => {
-                      switch (m.type) {
-                        case "from":
-                          return (
-                            <div class="col-start-1 col-end-8 p-3 rounded-lg">
-                              <div class="flex flex-row items-center">
-                                <div class="flex items-center justify-center h-10 w-10 rounded-full bg-indigo-500 flex-shrink-0">
-                                  {data.home.callsign.slice(0, 1)}
-                                </div>
-                                <div class="relative ml-3 text-sm bg-white py-2 px-4 shadow rounded-xl">
-                                  <div>{m.text}</div>
-                                </div>
-                              </div>
-                            </div>
-                          );
-                        case "to":
-                          return (
-                            <div class="col-start-6 col-end-13 p-3 rounded-lg">
-                              <div class="flex items-center justify-start flex-row-reverse">
-                                <div class="flex items-center justify-center h-10 w-10 rounded-full bg-indigo-500 flex-shrink-0">
-                                  {s.callsign.slice(0, 1)}
-                                </div>
-                                <div class="relative mr-3 text-sm bg-indigo-100 py-2 px-4 shadow rounded-xl">
-                                  <div>{m.text}</div>
-                                </div>
-                              </div>
-                            </div>
-                          );
+                {don(path().chat.selectedSession).map((s) => {
+                  const session = data.chat.sessions[normalize(s)];
+                  if (!session) return ":D";
 
-                        default:
-                          return (
-                            <div class="col-start-1 col-end-8 p-3 rounded-lg">
-                              <div class="flex items-center justify-start flex-row-reverse">
+                  return don(path(session).lines.$).map((m) => {
+                    switch (m.type) {
+                      case "from":
+                        return (
+                          <div class="col-start-1 col-end-8 p-3 rounded-lg">
+                            <div class="flex flex-row items-center">
+                              <div class="flex items-center justify-center h-10 w-10 rounded-full bg-indigo-500 flex-shrink-0">
+                                {data.home.callsign.slice(0, 1)}
+                              </div>
+                              <div class="relative ml-3 text-sm bg-white py-2 px-4 shadow rounded-xl">
                                 <div>{m.text}</div>
                               </div>
                             </div>
-                          );
-                      }
-                    })
-                  )}
+                          </div>
+                        );
+                      case "to":
+                        return (
+                          <div class="col-start-6 col-end-13 p-3 rounded-lg">
+                            <div class="flex items-center justify-start flex-row-reverse">
+                              <div class="flex items-center justify-center h-10 w-10 rounded-full bg-indigo-500 flex-shrink-0">
+                                {s.slice(0, 1)}
+                              </div>
+                              <div class="relative mr-3 text-sm bg-indigo-100 py-2 px-4 shadow rounded-xl">
+                                <div>{m.text}</div>
+                              </div>
+                            </div>
+                          </div>
+                        );
+
+                      default:
+                        return (
+                          <div class="col-start-1 col-end-8 rounded-lg">
+                            <div class="flex items-center justify-start flex-row-reverse">
+                              <div
+                                class={`text-${
+                                  m.type === "error"
+                                    ? "red"
+                                    : m.type === "info"
+                                    ? "blue"
+                                    : m.type === "success"
+                                    ? "green"
+                                    : m.type === "warning"
+                                    ? "yellow"
+                                    : "gray"
+                                }-500`}
+                              >
+                                {m.text}
+                              </div>
+                            </div>
+                          </div>
+                        );
+                    }
+                  });
+                })}
               </div>
             </div>
           </div>

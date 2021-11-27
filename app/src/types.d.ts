@@ -1,6 +1,4 @@
 type MessageType = "key" | "key2" | "key3" | "msg";
-type LogLevel = "info" | "important" | "success" | "warning" | "error";
-type Panel = "init" | "chat";
 type Store = "localStorage" | "sessionStorage" | "none";
 
 interface Message {
@@ -35,7 +33,7 @@ interface Home {
   key: string;
 }
 
-type LogLevel = "info" | "warning" | "error";
+type LogLevel = "info" | "warning" | "error" | "success";
 
 interface Line {
   type: "from" | "to" | LogLevel;
@@ -44,7 +42,6 @@ interface Line {
 
 interface Session {
   callsign: string;
-  visible: boolean;
   direction: "outgoing" | "incoming";
   lines: Line[];
   outgoing: MsgMsg | MsgKey | MsgKey2 | MsgKey3 | undefined;
@@ -53,7 +50,8 @@ interface Session {
 
 interface Chat {
   callsignToConnectTo: string;
-  sessions: Session[];
+  sessions: { [callsign: string]: Session };
+  selectedSession: string;
 }
 
 interface Data {

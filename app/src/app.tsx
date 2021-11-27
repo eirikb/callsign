@@ -18,7 +18,7 @@ init(
   <div>
     {don(path().panel.$path).map((panel) => {
       switch (panel) {
-        case "main":
+        case "chat":
           return <Chat />;
         default:
           return <Home />;
