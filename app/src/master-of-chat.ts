@@ -1,5 +1,7 @@
 import { data, on, path } from "./dd";
 import {
+  decrypt,
+  encrypt,
   fetchCert,
   generateKey,
   generateSecret,
@@ -7,24 +9,24 @@ import {
   signSecret,
   verifyCertSign,
 } from "./e2ee";
-
-// TODO: RE MOVE ME
-on("!+*", path().panel, (m) => {
-  console.log(m, data.home.callsign);
-  if (data.home.callsign === "eirikb.callsign.network") {
-    const callsign = "test.callsign.network";
-    setTimeout(() => {
-      data.chat.sessions[normalize(callsign)] = {
-        callsign,
-        direction: "outgoing",
-        lines: [],
-        outgoing: undefined,
-        incoming: undefined,
-      };
-      data.chat.selectedSession = callsign;
-    });
-  }
-});
+//
+// // TODO: RE MOVE ME
+// on("!+*", path().panel, (m) => {
+//   console.log(m, data.home.callsign);
+//   if (data.home.callsign === "eirikb.callsign.network") {
+//     const callsign = "test.callsign.network";
+//     setTimeout(() => {
+//       data.chat.sessions[normalize(callsign)] = {
+//         callsign,
+//         direction: "outgoing",
+//         lines: [],
+//         outgoing: undefined,
+//         incoming: undefined,
+//       };
+//       data.chat.selectedSession = callsign;
+//     });
+//   }
+// });
 
 const keys: { [callsign: string]: string } = {};
 const pendingSecrets: { [callsign: string]: string } = {};
@@ -45,7 +47,8 @@ function log(logLevel: LogLevel, session: Session, text: string) {
 const info = (session: Session, text: string) => log("info", session, text);
 const success = (session: Session, text: string) =>
   log("success", session, text);
-const warn = (session: Session, text: string) => log("warning", session, text);
+const warning = (session: Session, text: string) =>
+  log("warning", session, text);
 const error = (session: Session, text: string) => log("error", session, text);
 
 async function verifyCallsign(session: Session) {
@@ -160,9 +163,54 @@ async function onKey3(session: Session, msg: MsgKey3) {
   }
 }
 
-on("+", path().chat.sessions.$, async (session: Session) => {
-  console.log("+", session.callsign);
+export async function sendMessage(text: string) {
+  const session = data.chat.sessions[normalize(data.chat.selectedSession)];
+  if (session && secrets[session.callsign]) {
+    info(session, `Encrypting message ${text}`);
 
+    const [encrypted, iv] = await encrypt(
+      Buffer.from(secrets[session.callsign], "hex"),
+      text
+    );
+    info(session, `Encrypted ${hex(encrypted)}, iv ${hex(iv)}`);
+
+    info(session, `Sending message...`);
+    session.outgoing = undefined;
+    session.outgoing = {
+      type: "msg",
+      fromCallsign: data.home.callsign,
+      text: encrypted,
+      iv: iv.toString("hex"),
+    } as MsgMsg;
+    session.lines.push({
+      text,
+      type: "from",
+    });
+  } else {
+    warning(session, `Missing secret, please connect first`);
+  }
+}
+
+async function onMessage(session: Session, msg: MsgMsg) {
+  info(session, `Got encrypted message ${hex(msg.text)}, iv ${hex(msg.iv)}`);
+
+  if (secrets[msg.fromCallsign]) {
+    info(session, "Decrypting...");
+    const decrypted = await decrypt(
+      Buffer.from(secrets[msg.fromCallsign], "hex"),
+      msg.text,
+      msg.iv
+    );
+    session.lines.push({
+      text: decrypted,
+      type: "to",
+    });
+  } else {
+    error(session, "No valid session, please connect first");
+  }
+}
+
+on("+", path().chat.sessions.$, async (session: Session) => {
   info(session, `Direction: ${session.direction}`);
   if (session.direction === "outgoing") {
     await verifyCallsign(session);
@@ -171,7 +219,6 @@ on("+", path().chat.sessions.$, async (session: Session) => {
 on("!+*", path().chat.sessions.$.incoming, async (incoming, { $ }) => {
   const session = data.chat.sessions[$];
   if (!session) return;
-  console.log("incoming", incoming, "session", session);
   // Nothing to see here, carry on
   setTimeout(() => {
     if (incoming.type === "key") {
@@ -180,6 +227,8 @@ on("!+*", path().chat.sessions.$.incoming, async (incoming, { $ }) => {
       onKey2(session, incoming as MsgKey2);
     } else if (incoming.type === "key3") {
       onKey3(session, incoming as MsgKey3);
+    } else if (incoming.type === "msg") {
+      onMessage(session, incoming as MsgMsg);
     }
   });
   session.incoming = undefined;

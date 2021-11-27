@@ -44,7 +44,6 @@ on("+!*", path().home.callsign, (callsign) => {
 
       const val = snapshot.val();
       if (val) {
-        console.log("val", val);
         const session = data.chat.sessions[normalize(val.fromCallsign)];
         if (session) {
           session.incoming = val;
@@ -56,8 +55,6 @@ on("+!*", path().home.callsign, (callsign) => {
             outgoing: undefined,
             incoming: val,
           };
-          // TODO:
-          data.chat.selectedSession = val.fromCallsign;
         }
       }
     });

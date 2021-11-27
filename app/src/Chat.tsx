@@ -1,5 +1,6 @@
 import { don, data, path, React } from "./dd";
 import { normalize } from "./e2ee";
+import { sendMessage } from "./master-of-chat";
 
 function connect(e: Event) {
   e.preventDefault();
@@ -15,6 +16,13 @@ function connect(e: Event) {
 
   data.chat.callsignToConnectTo = "";
   data.chat.selectedSession = callsign;
+}
+
+async function send(e: Event) {
+  e.preventDefault();
+  const text = data.chat.text;
+  await sendMessage(text);
+  data.chat.text = "";
 }
 
 export const Chat = () => (
@@ -119,7 +127,10 @@ export const Chat = () => (
               </div>
             </div>
           </div>
-          <div class="flex flex-row items-center h-16 rounded-xl bg-white w-full px-4">
+          <form
+            class="flex flex-row items-center h-16 rounded-xl bg-white w-full px-4"
+            onsubmit={send}
+          >
             <div>
               <button class="flex items-center justify-center text-gray-400 hover:text-gray-600">
                 <svg
@@ -141,6 +152,7 @@ export const Chat = () => (
             <div class="flex-grow ml-4">
               <div class="relative w-full">
                 <input
+                  bind={path().chat.text.$path}
                   type="text"
                   class="flex w-full border rounded-xl focus:outline-none focus:border-indigo-300 pl-4 h-10"
                 />
@@ -183,7 +195,7 @@ export const Chat = () => (
                 </span>
               </button>
             </div>
-          </div>
+          </form>
         </div>
       </div>
     </div>

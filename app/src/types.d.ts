@@ -52,6 +52,7 @@ interface Chat {
   callsignToConnectTo: string;
   sessions: { [callsign: string]: Session };
   selectedSession: string;
+  text: string;
 }
 
 interface Data {

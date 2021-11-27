@@ -17,6 +17,7 @@ const dd = domdom<Data>({
     callsignToConnectTo: "",
     sessions: {},
     selectedSession: "",
+    text: "",
   },
 });
 
