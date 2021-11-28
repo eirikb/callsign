@@ -166,15 +166,10 @@ async function onKey3(session: Session, msg: MsgKey3) {
 export async function sendMessage(text: string) {
   const session = data.chat.sessions[normalize(data.chat.selectedSession)];
   if (session && secrets[session.callsign]) {
-    info(session, `Encrypting message ${text}`);
-
     const [encrypted, iv] = await encrypt(
       Buffer.from(secrets[session.callsign], "hex"),
       text
     );
-    info(session, `Encrypted ${hex(encrypted)}, iv ${hex(iv)}`);
-
-    info(session, `Sending message...`);
     session.outgoing = undefined;
     session.outgoing = {
       type: "msg",
@@ -192,10 +187,7 @@ export async function sendMessage(text: string) {
 }
 
 async function onMessage(session: Session, msg: MsgMsg) {
-  info(session, `Got encrypted message ${hex(msg.text)}, iv ${hex(msg.iv)}`);
-
   if (secrets[msg.fromCallsign]) {
-    info(session, "Decrypting...");
     const decrypted = await decrypt(
       Buffer.from(secrets[msg.fromCallsign], "hex"),
       msg.text,

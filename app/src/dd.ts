@@ -3,7 +3,7 @@ import domdom from "@eirikb/domdom";
 const getItem = (key: string, or: string): string =>
   localStorage.getItem(key) || sessionStorage.getItem(key) || or;
 
-const dd = domdom<Data>({
+const initial: Data = {
   panel: "home",
   home: {
     store: getItem("store", "false") === "true",
@@ -19,7 +19,15 @@ const dd = domdom<Data>({
     selectedSession: "",
     text: "",
   },
-});
+};
+
+const dd = domdom<Data>(initial);
+
+export const reset = () => {
+  for (const [key, value] of Object.entries(initial)) {
+    dd.set(key, value);
+  }
+};
 
 export const React = dd.React;
 export const don = dd.don;

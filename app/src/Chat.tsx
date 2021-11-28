@@ -1,4 +1,4 @@
-import { don, data, path, React } from "./dd";
+import { don, data, path, React, reset } from "./dd";
 import { normalize } from "./e2ee";
 import { sendMessage } from "./master-of-chat";
 
@@ -25,12 +25,25 @@ async function send(e: Event) {
   data.chat.text = "";
 }
 
+function logout() {
+  localStorage.clear();
+  reset();
+}
+
 export const Chat = () => (
   <div class="flex h-screen text-gray-800">
     <div class="flex flex-row h-full w-full overflow-x-hidden">
       <div class="flex flex-col py-8 pl-6 pr-2 w-64 bg-white flex-shrink-0">
         <div class="flex flex-row items-center justify-center h-12 w-full">
-          <div class="ml-2 font-bold text-xl">{don(path().home.callsign)}</div>
+          <div class="ml-2 font-bold text-xl">
+            {don(path().home.callsign)}
+            <button
+              class="rounded bg-blue-200 text-gray-500 mb-5 p-1"
+              onclick={logout}
+            >
+              Log out
+            </button>
+          </div>
         </div>
         <form class="ml-2" onSubmit={connect}>
           <label>New Session</label>
@@ -64,11 +77,11 @@ export const Chat = () => (
       <div class="flex flex-col flex-auto h-full p-6">
         <div class="flex flex-col flex-auto flex-shrink-0 rounded-2xl bg-gray-100 h-full p-4">
           <div class="flex flex-col h-full overflow-x-auto mb-4">
-            <div class="flex flex-col h-full">
+            <div class="flex flex-col-reverse overflow-y-scroll h-full">
               <div class="grid grid-cols-12 gap-y-2">
                 {don(path().chat.selectedSession).map((s) => {
                   const session = data.chat.sessions[normalize(s)];
-                  if (!session) return ":D";
+                  if (!session) return "";
 
                   return don(path(session).lines.$).map((m) => {
                     switch (m.type) {
