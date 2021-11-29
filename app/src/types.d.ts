@@ -56,7 +56,7 @@ interface Chat {
 }
 
 interface Data {
-  panel: "home" | "chat";
+  panel: "home" | "chat" | "create";
   home: Home;
   chat: Chat;
 }

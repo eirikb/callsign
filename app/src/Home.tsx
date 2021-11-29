@@ -110,6 +110,7 @@ export const Home = () => {
             <button
               type="submit"
               class="bg-cyan-200 p-2 pr-5 pl-5 text-gray-800 font-semibold border-cyan-700 focus:ring-2 m-4"
+              onclick={() => (data.panel = "create")}
             >
               Create test callsign
             </button>

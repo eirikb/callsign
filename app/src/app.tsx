@@ -10,6 +10,7 @@ import "./style.css";
 import { don, data, init, path, React } from "./dd";
 import { Home } from "./Home";
 import { Chat } from "./Chat";
+import { Create } from "./Create";
 import "./transport";
 import "./master-of-chat";
 
@@ -20,6 +21,8 @@ init(
       switch (panel) {
         case "chat":
           return <Chat />;
+        case "create":
+          return <Create />;
         default:
           return <Home />;
       }
