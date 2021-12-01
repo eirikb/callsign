@@ -37,7 +37,7 @@ elif [ "$1" == "client" ]; then
   npm i
   ./node_modules/.bin/parcel build src/index.html --public-url .
   cd ..
-  cp -r client/dist build/client
+  cp -r client/dist /build/client
 
 elif [ "$1" == "deploy" ]; then
   rsync -aP build/* 192.168.1.2:~/callsign/
