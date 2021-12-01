@@ -1,9 +1,7 @@
 import { data, don, path, React } from "./dd";
-import { google } from "./transport";
 
 async function doGoogle() {
   console.log("CONNECT WITH GOOGLE! :D");
-  await google();
 }
 
 export const Create = () => {
