@@ -36,7 +36,7 @@ import { normalize } from "./e2ee";
 //   console.log(res);
 // }
 //
-const ws = new WebSocket("ws://localhost:3000");
+const ws = new WebSocket(`wss://${location.host}/api`);
 
 let open = false;
 const queue: any[] = [];
