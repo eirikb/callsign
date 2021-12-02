@@ -11,22 +11,22 @@ import {
 } from "./e2ee";
 //
 // // TODO: RE MOVE ME
-on("!+*", path().panel, (m) => {
-  console.log(m, data.home.callsign);
-  if (data.home.callsign === "eirikb.callsign.network") {
-    const callsign = "test.callsign.network";
-    setTimeout(() => {
-      data.chat.sessions[normalize(callsign)] = {
-        callsign,
-        direction: "outgoing",
-        lines: [],
-        outgoing: undefined,
-        incoming: undefined,
-      };
-      data.chat.selectedSession = callsign;
-    });
-  }
-});
+// on("!+*", path().panel, (m) => {
+//   console.log(m, data.home.callsign);
+//   if (data.home.callsign === "eirikb.callsign.network") {
+//     const callsign = "test.callsign.network";
+//     setTimeout(() => {
+//       data.chat.sessions[normalize(callsign)] = {
+//         callsign,
+//         direction: "outgoing",
+//         lines: [],
+//         outgoing: undefined,
+//         incoming: undefined,
+//       };
+//       data.chat.selectedSession = callsign;
+//     });
+//   }
+// });
 
 const keys: { [callsign: string]: string } = {};
 const pendingSecrets: { [callsign: string]: string } = {};
