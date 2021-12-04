@@ -57,6 +57,7 @@ interface Chat {
 
 interface Data {
   panel: "home" | "chat" | "create";
+  connected: boolean;
   home: Home;
   chat: Chat;
 }

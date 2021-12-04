@@ -1,6 +1,6 @@
 {
   "scripts": {
-    "start": "parcel client/index.html"
+    "start": "parcel --hmr-port 1235 src/index.html"
   },
   "devDependencies": {
     "parcel": "^2.0.1",

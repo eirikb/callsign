@@ -1,5 +1,19 @@
-import { data, don, path, React } from "./dd";
+import { data, on, don, path, React } from "./dd";
 import { fetchCert, normalizeKey, verifyCert } from "./e2ee";
+
+on("!+*", path().connected, (c) => {
+  if (c) {
+    try {
+      data.home = JSON.parse(localStorage.getItem("home") ?? "");
+      // ffs
+      setTimeout(() => {
+        if (data.home.key) {
+          connect();
+        }
+      });
+    } catch (ignored) {}
+  }
+});
 
 async function submit(event: Event) {
   event.preventDefault();
@@ -39,13 +53,6 @@ async function connect() {
 }
 
 export const Home = () => {
-  try {
-    data.home = JSON.parse(localStorage.getItem("home") ?? "");
-    if (data.home.key) {
-      connect();
-    }
-  } catch (ignored) {}
-
   return (
     <div class="flex h-screen">
       <div class="m-auto">
