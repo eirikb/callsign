@@ -1,12 +1,10 @@
 import { data, on, path } from "./dd";
 import { normalize } from "./e2ee";
 
-const ws = new WebSocket(
-  `${location.protocol === "http:" ? "ws" : "wss"}://${location.host}/api`
-);
+let ws: WebSocket | undefined = undefined;
 
-function send(v: any) {
-  ws.send(JSON.stringify(v));
+export function send(v: any) {
+  ws?.send(JSON.stringify(v));
 }
 
 on("!+*", path().chat.sessions.$.outgoing, async (outgoing, { $ }) => {
@@ -27,10 +25,28 @@ on("!+*", path().chat.sessions.$.outgoing, async (outgoing, { $ }) => {
   }
 });
 
-ws.addEventListener("open", () => {
-  data.connected = true;
+on("+!*", path().panel, (p) => {
+  if (p === "chat") {
+    send({ fromCallsign: data.home.callsign, type: "listen" });
+  }
+});
+
+function connect() {
+  ws = new WebSocket(
+    `${location.protocol === "http:" ? "ws" : "wss"}://${location.host}/api`
+  );
+  ws.addEventListener("open", () => {
+    data.connected = true;
+  });
   ws.addEventListener("message", (m) => {
     const val = JSON.parse(m.data);
+
+    if (val.type === "create") {
+      data.create.status = val.status;
+      data.create.ok = val.ok !== false;
+      return;
+    }
+
     const session = data.chat.sessions[normalize(val.fromCallsign)];
     if (session) {
       session.incoming = val;
@@ -44,10 +60,15 @@ ws.addEventListener("open", () => {
       };
     }
   });
-});
 
-on("+!*", path().panel, (p) => {
-  if (p === "chat") {
-    send({ fromCallsign: data.home.callsign, type: "listen" });
-  }
-});
+  ws.addEventListener("close", () => {
+    console.log("reconnect");
+    setTimeout(connect, 1000);
+  });
+  ws.addEventListener("error", (err) => {
+    console.error(err);
+    ws?.close();
+  });
+}
+
+connect();

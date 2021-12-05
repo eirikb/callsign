@@ -55,9 +55,18 @@ interface Chat {
   text: string;
 }
 
+interface Create {
+  callsign: string;
+  password: string;
+  password2: string;
+  status: string;
+  ok: boolean;
+}
+
 interface Data {
   panel: "home" | "chat" | "create";
   connected: boolean;
   home: Home;
   chat: Chat;
+  create: Create;
 }

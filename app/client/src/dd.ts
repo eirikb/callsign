@@ -4,7 +4,7 @@ const getItem = (key: string, or: string): string =>
   localStorage.getItem(key) || sessionStorage.getItem(key) || or;
 
 const initial: Data = {
-  panel: "home",
+  panel: "create",
   connected: false,
   home: {
     store: getItem("store", "false") === "true",
@@ -19,6 +19,11 @@ const initial: Data = {
     sessions: {},
     selectedSession: "",
     text: "",
+  },
+  create: {
+    callsign: "hei",
+    password: "a",
+    password2: "a",
   },
 };
 
