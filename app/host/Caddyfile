@@ -1,0 +1,18 @@
+callsign.network {
+  file_server {
+    root /data/client
+  }
+
+  reverse_proxy /api server:3000
+}
+
+*.callsign.network {
+  tls {
+    on_demand
+  }
+  file_server {
+    root /data/caddy/certificates/acme-v02.api.letsencrypt.org-directory/{host}
+    hide *.key
+  }
+  header Access-Control-Allow-Origin *
+}
