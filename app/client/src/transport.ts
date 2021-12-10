@@ -45,6 +45,19 @@ function connect() {
       data.create.status = val.status;
       data.create.ok = val.ok !== false;
       return;
+    } else if (val.type === "get") {
+      if (val.ok) {
+        console.log("OK!", val);
+      } else {
+        data.create.status = val.status;
+        data.create.ok = val.ok;
+      }
+      return;
+    }
+
+    if (!val.fromCallsign) {
+      console.error("No fromCallsign", val);
+      return;
     }
 
     const session = data.chat.sessions[normalize(val.fromCallsign)];
