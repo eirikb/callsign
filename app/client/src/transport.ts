@@ -1,5 +1,4 @@
 import { data, on, path } from "./dd";
-import { normalize } from "./e2ee";
 
 let ws: WebSocket | undefined = undefined;
 

@@ -1,12 +1,11 @@
 import { don, data, path, React, reset } from "./dd";
-import { normalize } from "./e2ee";
-import { sendMessage } from "./master-of-chat";
+// import { sendMessage } from "./master-of-chat";
 
 function connect(e: Event) {
   e.preventDefault();
 
   const callsign = data.chat.callsignToConnectTo;
-  data.chat.sessions[normalize(callsign)] = {
+  data.chat.sessions[callsign] = {
     lines: [],
     direction: "outgoing",
     callsign,
@@ -21,7 +20,7 @@ function connect(e: Event) {
 async function send(e: Event) {
   e.preventDefault();
   const text = data.chat.text;
-  await sendMessage(text);
+  // await sendMessage(text);
   data.chat.text = "";
 }
 
@@ -80,7 +79,7 @@ export const Chat = () => (
             <div class="flex flex-col-reverse overflow-y-scroll h-full">
               <div class="grid grid-cols-12 gap-y-2">
                 {don(path().chat.selectedSession).map((s) => {
-                  const session = data.chat.sessions[normalize(s)];
+                  const session = data.chat.sessions[s];
                   if (!session) return "";
 
                   return don(path(session).lines.$).map((m) => {

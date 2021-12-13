@@ -10,19 +10,19 @@ import "./style.css";
 import { don, data, init, path, React } from "./dd";
 import { Home } from "./Home";
 import { Chat } from "./Chat";
-import { Create } from "./Create";
+import { CreateKeys } from "./CreateKeys";
 import "./transport";
-import "./master-of-chat";
+// import "./master-of-chat";
 
 init(
   document.body,
   <div>
-    {don(path().panel.$path).map((panel) => {
+    {don(path().panel).map((panel) => {
       switch (panel) {
         case "chat":
           return <Chat />;
-        case "create":
-          return <Create />;
+        case "createKeys":
+          return <CreateKeys />;
         default:
           return <Home />;
       }

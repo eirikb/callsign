@@ -1,6 +1,7 @@
 {
   "scripts": {
-    "start": "npx ts-node-dev server.ts"
+    "start": "npx ts-node-dev server.ts",
+    "ok": "npx ts-node ok.ts"
   },
   "dependencies": {
     "bcrypt": "^5.0.1",

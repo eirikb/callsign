@@ -55,7 +55,12 @@ interface Chat {
   text: string;
 }
 
-interface Create {
+interface CreateKey {
+  publicKey: string;
+  privateKey: string;
+}
+
+interface RegisterUser {
   callsign: string;
   password: string;
   password2: string;
@@ -63,10 +68,21 @@ interface Create {
   ok: boolean;
 }
 
+interface UploadKey {
+  callsign: string;
+  password: string;
+  publicKey: string;
+  privateKey: string;
+  status: string;
+  ok: boolean;
+}
+
 interface Data {
-  panel: "home" | "chat" | "create";
+  panel: "home" | "chat" | "createKeys" | "registerUser" | "uploadKey";
   connected: boolean;
   home: Home;
   chat: Chat;
-  create: Create;
+  createKey: CreateKey;
+  registerUser: RegisterUser;
+  uploadKey: UploadKey;
 }
