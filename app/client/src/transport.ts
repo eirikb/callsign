@@ -39,18 +39,12 @@ function connect() {
   });
   ws.addEventListener("message", (m) => {
     const val = JSON.parse(m.data);
+    console.log(">", val);
 
-    if (val.type === "create") {
-      data.create.status = val.status;
-      data.create.ok = val.ok !== false;
-      return;
-    } else if (val.type === "get") {
-      if (val.ok) {
-        console.log("OK!", val);
-      } else {
-        data.create.status = val.status;
-        data.create.ok = val.ok;
-      }
+    if (val.type === "status") {
+      console.log("STATUS!", val);
+      data[val.path].status = val.status;
+      data[val.path].ok = val.ok;
       return;
     }
 
@@ -59,11 +53,11 @@ function connect() {
       return;
     }
 
-    const session = data.chat.sessions[normalize(val.fromCallsign)];
+    const session = data.chat.sessions[val.fromCallsign];
     if (session) {
       session.incoming = val;
     } else {
-      data.chat.sessions[normalize(val.fromCallsign)] = {
+      data.chat.sessions[val.fromCallsign] = {
         callsign: val.fromCallsign,
         lines: [],
         direction: "incoming",

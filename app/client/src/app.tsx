@@ -1,5 +1,7 @@
 // FML - like for real
 // @ts-ignore
+import { RegisterUser } from "./RegisterUser";
+
 if (module.hot) {
   // @ts-ignore
   module.hot.dispose(() => setTimeout(() => location.reload(), 200));
@@ -23,6 +25,8 @@ init(
           return <Chat />;
         case "createKeys":
           return <CreateKeys />;
+        case "registerUser":
+          return <RegisterUser />;
         default:
           return <Home />;
       }

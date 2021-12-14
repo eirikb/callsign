@@ -9,6 +9,13 @@ const listeners: { [key: string]: any[] } = {};
 const send = (socket: ws.WebSocket, data: any) =>
   socket.send(JSON.stringify(data));
 
+const sendStatus = (
+  socket: ws.WebSocket,
+  path: string,
+  status: string,
+  ok: boolean
+) => send(socket, { type: "status", path, status, ok });
+
 const wsServer = new ws.Server({ noServer: true });
 
 const actions = {
@@ -17,20 +24,12 @@ const actions = {
     listeners[callsign].push(socket);
   },
 
-  async create(socket, val) {
+  async registerUser(socket, val) {
     const ok = await db.create(val.value);
     if (ok) {
-      send(socket, {
-        type: "create",
-        ok,
-        status: "OK!",
-      });
+      socket.ok("OK!");
     } else {
-      send(socket, {
-        type: "create",
-        ok,
-        status: "Already exists",
-      });
+      socket.fail("Already exists");
     }
   },
 
@@ -69,7 +68,13 @@ wsServer.on("connection", (socket) => {
     console.log(d);
     const action = actions[d.type];
     try {
-      if (action) await action(socket, d);
+      if (action) {
+        (socket as any).ok = (text: string) =>
+          sendStatus(socket, d.type, text, true);
+        (socket as any).fail = (text: string) =>
+          sendStatus(socket, d.type, text, false);
+        await action(socket, d, d.type);
+      }
     } catch (e) {
       send(socket, { ok: false, status: e.message, type: d.type });
     }

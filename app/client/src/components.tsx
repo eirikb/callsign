@@ -1,4 +1,4 @@
-import { React, data } from "./dd";
+import { React, data, don, path } from "./dd";
 
 export const Panel = ({}, { children }) => (
   <div class="flex h-screen">
@@ -19,11 +19,12 @@ export const BackLink = () => (
   </a>
 );
 
-export const Input = ({ label, bind, type = "text" }) => (
+export const Input = ({ label, bind, type = "text", required = false }) => (
   <div class="flex flex-col">
     <label class="text-gray-700 text-sm">{label}</label>
     <input
       class="w-full p-2 border rounded-lg border-gray-400"
+      required={required}
       bind={bind}
       placeholder={label}
       type={type}
@@ -51,4 +52,10 @@ export const Button = (
   >
     {children}
   </button>
+);
+
+export const Status = ({ okPath, statusPath }) => (
+  <div class={don(okPath).map((k) => (k ? "text-black-500" : "text-red-500"))}>
+    {don(statusPath)}
+  </div>
 );
