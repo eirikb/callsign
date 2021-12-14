@@ -1,8 +1,9 @@
 import { data, don, path, React } from "./dd";
 import { BackLink, Button, Input, Panel, Status } from "./components";
-import { send } from "./transport";
+import { query } from "./transport";
+import { RegisterUserQuery, RegisterUserReply } from "../../server/types";
 
-function submit(e: Event) {
+async function submit(e: Event) {
   e.preventDefault();
   data.registerUser.ok = true;
   if (data.registerUser.password !== data.registerUser.password2) {
@@ -13,13 +14,24 @@ function submit(e: Event) {
 
   data.registerUser.status = "Creating...";
   const c = data.registerUser;
-  send({
-    type: "registerUser",
-    value: {
-      callsign: c.callsign,
-      password: c.password,
-    },
-  });
+  try {
+    const res = await query<RegisterUserQuery, RegisterUserReply>(
+      "registerUser",
+      {
+        callsign: c.callsign,
+        password: c.password,
+      }
+    );
+    if (res.status == "created") {
+      data.registerUser.status = "Created!";
+    } else {
+      data.registerUser.ok = false;
+      data.registerUser.status = "Already exists";
+    }
+  } catch (err: any) {
+    data.registerUser.status = err.messages;
+    data.registerUser.ok = false;
+  }
 }
 
 export const RegisterUser = () => {

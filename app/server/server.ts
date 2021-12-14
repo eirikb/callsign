@@ -1,6 +1,7 @@
 import * as express from "express";
 import * as ws from "ws";
 import * as db from "./super-advanced-user-database";
+import { RegisterUserQuery, RegisterUserReply } from "./types";
 
 const app = express();
 
@@ -9,14 +10,13 @@ const listeners: { [key: string]: any[] } = {};
 const send = (socket: ws.WebSocket, data: any) =>
   socket.send(JSON.stringify(data));
 
-const sendStatus = (
-  socket: ws.WebSocket,
-  path: string,
-  status: string,
-  ok: boolean
-) => send(socket, { type: "status", path, status, ok });
-
 const wsServer = new ws.Server({ noServer: true });
+
+declare global {
+  interface WebSocket {
+    reply<T>(data: T): void;
+  }
+}
 
 const actions = {
   listen(socket, { callsign }) {
@@ -24,29 +24,17 @@ const actions = {
     listeners[callsign].push(socket);
   },
 
-  async registerUser(socket, val) {
-    const ok = await db.create(val.value);
+  async registerUser(socket: WebSocket, val: RegisterUserQuery) {
+    console.log("va", val);
+    const ok = await db.create({
+      callsign: val.callsign,
+      password: val.password,
+      email: "",
+    });
     if (ok) {
-      socket.ok("OK!");
+      socket.reply<RegisterUserReply>({ status: "created" });
     } else {
-      socket.fail("Already exists");
-    }
-  },
-
-  async get(socket, val) {
-    const { callsign, password } = val.value;
-    const ok = await db.verify(callsign, password);
-    if (ok) {
-      send(socket, {
-        type: "get",
-        ok,
-      });
-    } else {
-      send(socket, {
-        type: "get",
-        ok,
-        status: "Wrong password",
-      });
+      socket.reply<RegisterUserReply>({ status: "alreadyExists" });
     }
   },
 
@@ -69,14 +57,14 @@ wsServer.on("connection", (socket) => {
     const action = actions[d.type];
     try {
       if (action) {
-        (socket as any).ok = (text: string) =>
-          sendStatus(socket, d.type, text, true);
-        (socket as any).fail = (text: string) =>
-          sendStatus(socket, d.type, text, false);
-        await action(socket, d, d.type);
+        (socket as any).reply = (data: any) =>
+          send(socket, Object.assign({ type: "reply" }, data));
+        await action(socket, d);
+      } else {
+        console.log("Unknown action", action, d);
       }
     } catch (e) {
-      send(socket, { ok: false, status: e.message, type: d.type });
+      send(socket, { status: "exception", error: e.message, type: "reply" });
     }
   });
 });

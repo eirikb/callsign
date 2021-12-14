@@ -26,9 +26,9 @@ const initial: Data = {
   },
   registerUser: {
     callsign: "",
-    status: "",
     password: "",
     password2: "",
+    status: "",
     ok: false,
   },
   uploadKey: {

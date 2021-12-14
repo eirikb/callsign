@@ -1,4 +1,7 @@
+// setTimeout because
+
 import { data, on, path } from "./dd";
+import { queryTypes } from "../../server/types";
 
 let ws: WebSocket | undefined = undefined;
 
@@ -30,6 +33,18 @@ on("+!*", path().panel, (p) => {
   }
 });
 
+// Imagine you haven't seen the next few lines, and continue with your life
+let resolveHack: any;
+let rejectHack: any;
+
+export async function query<T, R>(type: queryTypes, data: T): Promise<R> {
+  return new Promise((resolve, reject) => {
+    resolveHack = resolve;
+    rejectHack = reject;
+    ws?.send(JSON.stringify(Object.assign({ type }, data)));
+  });
+}
+
 function connect() {
   ws = new WebSocket(
     `${location.protocol === "http:" ? "ws" : "wss"}://${location.host}/api`
@@ -41,10 +56,11 @@ function connect() {
     const val = JSON.parse(m.data);
     console.log(">", val);
 
-    if (val.type === "status") {
-      console.log("STATUS!", val);
-      data[val.path].status = val.status;
-      data[val.path].ok = val.ok;
+    if (val.type === "reply") {
+      if (resolveHack && rejectHack) {
+        if (val.error) rejectHack(val);
+        else resolveHack(val);
+      }
       return;
     }
 

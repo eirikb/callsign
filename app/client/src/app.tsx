@@ -12,9 +12,9 @@ import "./style.css";
 import { don, data, init, path, React } from "./dd";
 import { Home } from "./Home";
 import { Chat } from "./Chat";
-import { CreateKeys } from "./CreateKeys";
+import { CreateKeys } from "./CreateKey";
 import "./transport";
-// import "./master-of-chat";
+import { UploadKey } from "./UploadKeys";
 
 init(
   document.body,
@@ -27,6 +27,8 @@ init(
           return <CreateKeys />;
         case "registerUser":
           return <RegisterUser />;
+        case "uploadKey":
+          return <UploadKey />;
         default:
           return <Home />;
       }
