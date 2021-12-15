@@ -29,7 +29,7 @@ async function submit(e: Event) {
       data.registerUser.status = "Already exists";
     }
   } catch (err: any) {
-    data.registerUser.status = err.messages;
+    data.registerUser.status = err;
     data.registerUser.ok = false;
   }
 }

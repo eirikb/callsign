@@ -10,6 +10,12 @@ export const Panel = ({}, { children }) => (
   </div>
 );
 
+export const Link = ({ href }, { children }) => (
+  <a class="text-left text-blue-500 cursor-pointer" href={href}>
+    {children}
+  </a>
+);
+
 export const BackLink = () => (
   <a
     class="text-left text-blue-500 cursor-pointer"

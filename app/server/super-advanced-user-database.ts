@@ -20,7 +20,7 @@ const data: { [callsign: string]: User } = {};
 (async () => {
   try {
     for (const [key, val] of Object.entries(
-      JSON.parse(await fs.readFile("./db.json", "utf-8"))
+      JSON.parse(await fs.readFile("./data/db.json", "utf-8"))
     )) {
       console.log(key, val);
       data[key] = val as User;
@@ -50,7 +50,10 @@ export async function create(user: CreateUser): Promise<boolean> {
   };
   // In theory  writing is slower than moving, so if the system
   // is forcefully terminated this might save the day.
-  await fs.writeFile("./dbtmp.json", JSON.stringify(data));
-  await fs.rename("./dbtmp.json", "./db.json");
+  try {
+    await fs.mkdir("./data", { recursive: true });
+  } catch (e) {}
+  await fs.writeFile("./data/dbtmp.json", JSON.stringify(data));
+  await fs.rename("./data/dbtmp.json", "./data/db.json");
   return true;
 }

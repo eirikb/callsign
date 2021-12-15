@@ -75,6 +75,7 @@ interface UploadKey {
   privateKey: string;
   status: string;
   ok: boolean;
+  showPrivateKey: boolean;
 }
 
 interface Data {

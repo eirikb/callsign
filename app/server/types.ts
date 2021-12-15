@@ -1,6 +1,4 @@
-export type queryTypes = "registerUser";
-
-export type registerStatus = "created" | "alreadyExists" | "error";
+export type queryTypes = "registerUser" | "uploadKey";
 
 export interface RegisterUserQuery {
   callsign: string;
@@ -8,6 +6,15 @@ export interface RegisterUserQuery {
 }
 
 export interface RegisterUserReply {
-  status: registerStatus;
-  error?: string | undefined;
+  status: "created" | "alreadyExists";
+}
+
+export interface UploadKeyQuery {
+  callsign: string;
+  password: string;
+  publicKey: string;
+}
+
+export interface UploadKeyReply {
+  status: "uploaded" | "authError";
 }

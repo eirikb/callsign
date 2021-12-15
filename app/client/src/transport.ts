@@ -58,7 +58,7 @@ function connect() {
 
     if (val.type === "reply") {
       if (resolveHack && rejectHack) {
-        if (val.error) rejectHack(val);
+        if (val.error) rejectHack(val.error);
         else resolveHack(val);
       }
       return;

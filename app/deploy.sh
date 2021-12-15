@@ -44,5 +44,6 @@ elif [ "$1" == "deploy" ]; then
   rsync -aP build/* 192.168.1.2:~/callsign/
 
 elif [ "$1" == "restart" ]; then
-  ssh 192.168.1.2 "cd callsign && docker-compose restart"
+  ssh 192.168.1.2 "cd callsign && docker-compose down"
+  ssh 192.168.1.2 "cd callsign && docker-compose up -d"
 fi

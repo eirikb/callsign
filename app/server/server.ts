@@ -1,7 +1,14 @@
 import * as express from "express";
 import * as ws from "ws";
 import * as db from "./super-advanced-user-database";
-import { RegisterUserQuery, RegisterUserReply } from "./types";
+import * as fs from "fs/promises";
+import {
+  RegisterUserQuery,
+  RegisterUserReply,
+  UploadKeyQuery,
+  UploadKeyReply,
+} from "./types";
+import { WebSocket } from "ws";
 
 const app = express();
 
@@ -12,19 +19,13 @@ const send = (socket: ws.WebSocket, data: any) =>
 
 const wsServer = new ws.Server({ noServer: true });
 
-declare global {
-  interface WebSocket {
-    reply<T>(data: T): void;
-  }
-}
-
-const actions = {
-  listen(socket, { callsign }) {
+const actions: { [key: string]: any } = {
+  listen(socket: WebSocket, callsign: string) {
     listeners[callsign] = listeners[callsign] || [];
-    listeners[callsign].push(socket);
+    listeners[callsign]?.push(socket);
   },
 
-  async registerUser(socket: WebSocket, val: RegisterUserQuery) {
+  async registerUser(val: RegisterUserQuery): Promise<RegisterUserReply> {
     console.log("va", val);
     const ok = await db.create({
       callsign: val.callsign,
@@ -32,21 +33,35 @@ const actions = {
       email: "",
     });
     if (ok) {
-      socket.reply<RegisterUserReply>({ status: "created" });
+      return { status: "created" };
     } else {
-      socket.reply<RegisterUserReply>({ status: "alreadyExists" });
+      return { status: "alreadyExists" };
     }
   },
 
-  msg(socket, val) {
-    const to = listeners[val.toCallsign];
-    if (to) {
-      for (const t of to) {
-        console.log("to", t);
-        t.send(JSON.stringify(val.value));
-      }
+  async uploadKey(val: UploadKeyQuery): Promise<UploadKeyReply> {
+    console.log("KEY!", val);
+    if (await db.verify(val.callsign, val.password)) {
+      const callsign = `${val.callsign}.callsign.network`;
+      const dir = `./data/keys/${callsign}`;
+      await fs.mkdir(dir, { recursive: true });
+      const keyPath = `${dir}/${callsign}.key`;
+      await fs.writeFile(keyPath, val.publicKey);
+      return { status: "uploaded" };
+    } else {
+      return { status: "authError" };
     }
   },
+
+  // msg(socket, val) {
+  //   const to = listeners[val.toCallsign];
+  //   if (to) {
+  //     for (const t of to) {
+  //       console.log("to", t);
+  //       t.send(JSON.stringify(val.value));
+  //     }
+  //   }
+  // },
 };
 
 wsServer.on("connection", (socket) => {
@@ -54,17 +69,22 @@ wsServer.on("connection", (socket) => {
   socket.on("message", async (message: any) => {
     const d = JSON.parse(message);
     console.log(d);
-    const action = actions[d.type];
+    const action: any = actions[d.type];
     try {
       if (action) {
-        (socket as any).reply = (data: any) =>
-          send(socket, Object.assign({ type: "reply" }, data));
-        await action(socket, d);
+        const res = await action(d);
+        if (res) {
+          send(socket, Object.assign({ type: "reply" }, res));
+        }
       } else {
         console.log("Unknown action", action, d);
+        send(socket, {
+          error: `Unknown action ${d.type}`,
+          type: "reply",
+        });
       }
     } catch (e) {
-      send(socket, { status: "exception", error: e.message, type: "reply" });
+      send(socket, { error: e.message, type: "reply" });
     }
   });
 });
