@@ -68,23 +68,23 @@ async function sendData(session: Session, d: any) {
 // }
 
 // TODO: Remove
-on("!+*", path().panel, (m) => {
-  console.log(m, data.home.callsign);
-  if (data.home.callsign === "a.callsign.network") {
-    const callsign = "b.callsign.network";
-    setTimeout(() => {
-      data.chat.sessions[normalize(callsign)] = {
-        callsign,
-        direction: "outgoing",
-        lines: [],
-        outgoing: undefined,
-        incoming: undefined,
-        key: undefined,
-      };
-      data.chat.selectedSession = callsign;
-    }, 500);
-  }
-});
+// on("!+*", path().panel, (m) => {
+//   console.log(m, data.home.callsign);
+//   if (data.home.callsign === "a.callsign.network") {
+//     const callsign = "b.callsign.network";
+//     setTimeout(() => {
+//       data.chat.sessions[normalize(callsign)] = {
+//         callsign,
+//         direction: "outgoing",
+//         lines: [],
+//         outgoing: undefined,
+//         incoming: undefined,
+//         key: undefined,
+//       };
+//       data.chat.selectedSession = callsign;
+//     }, 500);
+//   }
+// });
 
 on("+", path().chat.sessions.$, async (session: Session) => {
   if (session.direction === "incoming") {
