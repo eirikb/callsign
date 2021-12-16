@@ -46,6 +46,7 @@ interface Session {
   lines: Line[];
   outgoing: MsgMsg | MsgKey | MsgKey2 | MsgKey3 | undefined;
   incoming: MsgMsg | MsgKey | MsgKey2 | MsgKey3 | undefined;
+  key?: stirng;
 }
 
 interface Chat {

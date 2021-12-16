@@ -56,3 +56,5 @@ export const init = dd.init;
 export const data = dd.data;
 export const path = dd.path;
 export const on = dd.on;
+
+export const normalize = (str: string) => str.replace(/\./g, "_").trim();

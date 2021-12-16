@@ -1,59 +1,68 @@
 import { data, on, don, path, React } from "./dd";
 import { Button, Input, Panel } from "./components";
-// import { fetchCert, normalizeKey, verifyCert } from "./e2ee";
+import {
+  decrypt,
+  encrypt,
+  fetchKey,
+  importPrivateKey,
+  importPublicKey,
+} from "./cryptomatic";
 
-// on("!+*", path().connected, (c) => {
-//   if (c) {
-//     try {
-//       data.home = JSON.parse(localStorage.getItem("home") ?? "");
-//       // ffs
-//       setTimeout(() => {
-//         if (data.home.key) {
-//           connect();
-//         }
-//       });
-//     } catch (ignored) {}
-//   }
-// });
-//
+on("!+*", path().connected, (c) => {
+  if (c) {
+    try {
+      data.home = JSON.parse(localStorage.getItem("home") ?? "");
+      // ffs
+      setTimeout(() => {
+        if (data.home.key) {
+          connect();
+        }
+      });
+    } catch (ignored) {}
+  }
+});
+
 async function submit(event: Event) {
   event.preventDefault();
-  console.log(1);
-  //   await connect();
+  await connect();
 }
 
-//
-// async function connect() {
-//   if (data.home.store) {
-//     localStorage.setItem("home", JSON.stringify(data.home));
-//   } else {
-//     localStorage.removeItem("home");
-//   }
-//
-//   data.home.connecting = true;
-//   data.home.status = "black";
-//   data.home.info = "Loading certificate...";
-//   try {
-//     const cert = await fetchCert(data.home.callsign);
-//     data.home.info = "Verifying cert...";
-//     const key = normalizeKey(data.home.key);
-//     if (verifyCert(cert, key)) {
-//       data.home.status = "green";
-//       data.home.info = "VERIFIED!";
-//       setTimeout(() => {
-//         data.panel = "chat";
-//       }, 500);
-//     } else {
-//       data.home.status = "red";
-//       data.home.info = "Unable to verify certificate";
-//     }
-//   } catch (e) {
-//     console.error(e);
-//     data.home.info = "red";
-//     data.home.info = "Unable to load cert";
-//   }
-//   data.home.connecting = false;
-// }
+async function connect() {
+  if (data.home.store) {
+    localStorage.setItem("home", JSON.stringify(data.home));
+  } else {
+    localStorage.removeItem("home");
+  }
+
+  data.home.connecting = true;
+  data.home.status = "black";
+  try {
+    data.home.info = "Importing private key...";
+    const privateKey = await importPrivateKey(data.home.key);
+    data.home.info = "Loading public key...";
+    const publicKeyString = await fetchKey(data.home.callsign);
+    data.home.info = "Importing public key...";
+    const publicKey = await importPublicKey(publicKeyString);
+    data.home.info = "Verifying keys...";
+    const encrypted = await encrypt(publicKey, "Hello, world!");
+    const output = await decrypt(privateKey, encrypted);
+    if (output === "Hello, world!") {
+      data.home.status = "green";
+      data.home.info = "VERIFIED!";
+      setTimeout(() => {
+        data.panel = "chat";
+      }, 500);
+    } else {
+      data.home.status = "red";
+      data.home.info = "Unable to verify keys";
+    }
+  } catch (e) {
+    console.error(e);
+    data.home.info = "red";
+    data.home.info = "Unable to load key";
+  }
+  data.home.connecting = false;
+}
 
 export const Home = () => (
   <Panel>

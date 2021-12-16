@@ -1,7 +1,13 @@
 // setTimeout because
 
-import { data, on, path } from "./dd";
+import { data, normalize, on, path } from "./dd";
 import { queryTypes } from "../../server/types";
+import {
+  decrypt,
+  importPrivateKey,
+  importSecretKey,
+  secretDecrypt,
+} from "./cryptomatic";
 
 let ws: WebSocket | undefined = undefined;
 
@@ -27,9 +33,21 @@ on("!+*", path().chat.sessions.$.outgoing, async (outgoing, { $ }) => {
   }
 });
 
+let listening = false;
+
+function listen() {
+  if (listening) return;
+  console.log("listen?");
+  if (data.home.callsign) {
+    console.log("listen!");
+    listening = true;
+    send({ callsign: data.home.callsign, type: "listen" });
+  }
+}
+
 on("+!*", path().panel, (p) => {
   if (p === "chat") {
-    send({ fromCallsign: data.home.callsign, type: "listen" });
+    listen();
   }
 });
 
@@ -50,11 +68,60 @@ function connect() {
     `${location.protocol === "http:" ? "ws" : "wss"}://${location.host}/api`
   );
   ws.addEventListener("open", () => {
+    console.log("connected");
+    listen();
     data.connected = true;
   });
-  ws.addEventListener("message", (m) => {
+  ws.addEventListener("message", async (m) => {
     const val = JSON.parse(m.data);
     console.log(">", val);
+
+    if (val.encrypted) {
+      console.log("Encrypted! :O");
+      const privateKey = await importPrivateKey(data.home.key);
+      console.log(privateKey);
+      const decrypted = await decrypt(privateKey, val.encrypted);
+      console.log("decrypted", decrypted);
+      const d = JSON.parse(decrypted);
+      console.log(d);
+      if (d.from && d.secret) {
+        console.log("WELL WELL WELL");
+        const callsign = d.from;
+        data.chat.sessions[normalize(callsign)] = {
+          callsign,
+          direction: "incoming",
+          lines: [],
+          outgoing: undefined,
+          incoming: undefined,
+          key: d.secret,
+        };
+      }
+      return;
+    }
+
+    if (val.cipher) {
+      console.log("OH OH OH");
+      const session = data.chat.sessions[normalize(val.from)];
+      console.log("session", session);
+      const secret = await importSecretKey(session.key);
+      console.log("secret", secret);
+      const decrypt = await secretDecrypt(secret, val.iv, val.cipher);
+      console.log("decrypt", decrypt);
+      const d = JSON.parse(decrypt);
+      console.log(d);
+      if (d.action) {
+        session.lines.push({
+          text: d.action,
+          type: "info",
+        });
+      } else {
+        session.lines.push({
+          text: d.text,
+          type: "to",
+        });
+      }
+      return;
+    }
 
     if (val.type === "reply") {
       if (resolveHack && rejectHack) {
@@ -84,6 +151,7 @@ function connect() {
   });
 
   ws.addEventListener("close", () => {
+    listening = false;
     console.log("reconnect");
     setTimeout(connect, 1000);
   });

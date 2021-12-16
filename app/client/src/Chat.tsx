@@ -1,11 +1,131 @@
-import { don, data, path, React, reset } from "./dd";
+import { on, don, data, path, React, reset, normalize } from "./dd";
+import {
+  encrypt,
+  exportSecretKey,
+  fetchKey,
+  generateSecretKey,
+  importPublicKey,
+  importSecretKey,
+  secretEncrypt,
+} from "./cryptomatic";
 // import { sendMessage } from "./master-of-chat";
+
+const hex = (data: Buffer | string) => {
+  const s = typeof data === "string" ? data : data.toString("hex");
+  return s.slice(0, 5).concat("...").concat(s.slice(-5));
+};
+
+const log = (logLevel: LogLevel, session: Session, text: string) =>
+  session.lines.push({
+    text,
+    type: logLevel,
+  });
+
+const info = (session: Session, text: string) => log("info", session, text);
+const success = (session: Session, text: string) =>
+  log("success", session, text);
+const warning = (session: Session, text: string) =>
+  log("warning", session, text);
+const error = (session: Session, text: string) => log("error", session, text);
+
+function currentSession() {
+  return data.chat.sessions[normalize(data.chat.selectedSession)];
+}
+
+async function sendData(session: Session, d: any) {
+  if (session.key) {
+    const secret = await importSecretKey(session.key);
+    console.log("secret", secret);
+    const [iv, cipher] = await secretEncrypt(secret, JSON.stringify(d));
+    console.log(iv, cipher);
+    d = { from: data.home.callsign, iv, cipher };
+  }
+
+  session.outgoing = undefined;
+  session.outgoing = Object.assign({ type: "msg" }, d);
+}
+
+// async function sendMessage(text: string) {
+//   const session = data.chat.sessions[normalize(data.chat.selectedSession)];
+//   if (session && session.key) {
+//     console.log("GOGOG", session.key, text);
+//     console.time("a");
+//     const key = await importPublicKey(session.key);
+//     console.timeEnd("a");
+//     console.log(key);
+//     console.time("b");
+//     const encrypted = await encrypt(key, text);
+//     console.timeEnd("b");
+//     console.log(encrypted);
+//     await sendData({ encrypted });
+//     session.lines.push({
+//       text,
+//       type: "from",
+//     });
+//   } else {
+//     warning(session, "No key");
+//   }
+// }
+
+// TODO: Remove
+on("!+*", path().panel, (m) => {
+  console.log(m, data.home.callsign);
+  if (data.home.callsign === "a.callsign.network") {
+    const callsign = "b.callsign.network";
+    setTimeout(() => {
+      data.chat.sessions[normalize(callsign)] = {
+        callsign,
+        direction: "outgoing",
+        lines: [],
+        outgoing: undefined,
+        incoming: undefined,
+        key: undefined,
+      };
+      data.chat.selectedSession = callsign;
+    }, 500);
+  }
+});
+
+on("+", path().chat.sessions.$, async (session: Session) => {
+  if (session.direction === "incoming") {
+    info(session, `Incoming session. Secret is ${hex(session.key)}`);
+    await sendData(session, { action: "ok" });
+    return;
+  }
+
+  info(session, "New session. Fetching key...");
+  try {
+    const publicKeyString = await fetchKey(session.callsign);
+    if (publicKeyString) {
+      info(session, `Key fetched. ${hex(publicKeyString)}. Importing...`);
+      const publicKey = await importPublicKey(publicKeyString);
+      info(session, "Imported. Creating new secret...");
+      const secretKey = await generateSecretKey();
+      const secret = await exportSecretKey(secretKey);
+      info(session, `Encrypting secret ${hex(secret)}`);
+      const encrypted = await encrypt(
+        publicKey,
+        JSON.stringify({
+          from: data.home.callsign,
+          secret,
+        })
+      );
+      info(session, `Sending ${hex(encrypted)}`);
+      await sendData(currentSession(), { encrypted });
+      session.key = secret;
+    } else {
+      warning(session, "Key failed");
+    }
+  } catch (e) {
+    error(session, `${e}`);
+  }
+});
 
 function connect(e: Event) {
   e.preventDefault();
 
   const callsign = data.chat.callsignToConnectTo;
-  data.chat.sessions[callsign] = {
+  data.chat.sessions[normalize(callsign)] = {
     lines: [],
     direction: "outgoing",
     callsign,
@@ -20,7 +140,11 @@ function connect(e: Event) {
 async function send(e: Event) {
   e.preventDefault();
   const text = data.chat.text;
-  // await sendMessage(text);
+  await sendData(currentSession(), { text });
+  currentSession().lines.push({
+    text,
+    type: "from",
+  });
   data.chat.text = "";
 }
 
@@ -79,7 +203,7 @@ export const Chat = () => (
             <div class="flex flex-col-reverse overflow-y-scroll h-full">
               <div class="grid grid-cols-12 gap-y-2">
                 {don(path().chat.selectedSession).map((s) => {
-                  const session = data.chat.sessions[s];
+                  const session = data.chat.sessions[normalize(s)];
                   if (!session) return "";
 
                   return don(path(session).lines.$).map((m) => {

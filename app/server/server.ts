@@ -20,7 +20,7 @@ const send = (socket: ws.WebSocket, data: any) =>
 const wsServer = new ws.Server({ noServer: true });
 
 const actions: { [key: string]: any } = {
-  listen(socket: WebSocket, callsign: string) {
+  listen({ callsign }: { callsign: string }, socket: WebSocket) {
     listeners[callsign] = listeners[callsign] || [];
     listeners[callsign]?.push(socket);
   },
@@ -53,15 +53,16 @@ const actions: { [key: string]: any } = {
     }
   },
 
-  // msg(socket, val) {
-  //   const to = listeners[val.toCallsign];
-  //   if (to) {
-  //     for (const t of to) {
-  //       console.log("to", t);
-  //       t.send(JSON.stringify(val.value));
-  //     }
-  //   }
-  // },
+  msg(val: any) {
+    console.log("msg", val);
+    const to = listeners[val.toCallsign];
+    if (to) {
+      for (const t of to) {
+        console.log("to", t);
+        t.send(JSON.stringify(val.value));
+      }
+    }
+  },
 };
 
 wsServer.on("connection", (socket) => {
@@ -72,7 +73,7 @@ wsServer.on("connection", (socket) => {
     const action: any = actions[d.type];
     try {
       if (action) {
-        const res = await action(d);
+        const res = await action(d, socket);
         if (res) {
           send(socket, Object.assign({ type: "reply" }, res));
         }
