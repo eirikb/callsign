@@ -2,6 +2,7 @@ import * as express from "express";
 import * as ws from "ws";
 import * as db from "./super-advanced-user-database";
 import * as fs from "fs/promises";
+import * as https from "https";
 import {
   RegisterUserQuery,
   RegisterUserReply,
@@ -33,6 +34,8 @@ const actions: { [key: string]: any } = {
       email: "",
     });
     if (ok) {
+      // Trigger server to create https cert. Fire and forget.
+      https.get(`https://${val.callsign}.callsign.network`);
       return { status: "created" };
     } else {
       return { status: "alreadyExists" };
@@ -58,7 +61,6 @@ const actions: { [key: string]: any } = {
     const to = listeners[val.toCallsign];
     if (to) {
       for (const t of to) {
-        console.log("to", t);
         t.send(JSON.stringify(val.value));
       }
     }

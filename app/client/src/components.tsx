@@ -10,8 +10,8 @@ export const Panel = ({}, { children }) => (
   </div>
 );
 
-export const Link = ({ href }, { children }) => (
-  <a class="text-left text-blue-500 cursor-pointer" href={href}>
+export const Link = ({ href, target = "_self" }, { children }) => (
+  <a target={target} class="text-left text-blue-500 cursor-pointer" href={href}>
     {children}
   </a>
 );

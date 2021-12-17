@@ -83,6 +83,7 @@ export const UploadKey = () => (
           <div>Your public key will be located here:</div>
           <div>
             <Link
+              target={"_blank"}
               href={`https://${data.uploadKey.callsign}.callsign.network/${data.uploadKey.callsign}.callsign.network.key`}
             >
               {`https://${data.uploadKey.callsign}.callsign.network/${data.uploadKey.callsign}.callsign.network.key`}
@@ -96,6 +97,10 @@ export const UploadKey = () => (
             You can now got to front page a log in using this callsign and the
             key.
           </div>
+          <p>
+            Note: It can be a good idea to wait at least 1 minute before trying,{" "}
+            <br /> in order for the server to set up a new domain with https .
+          </p>
           <div>
             <Button type="button" onClick={() => (data.panel = "home")}>
               Go to home

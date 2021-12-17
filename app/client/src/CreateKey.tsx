@@ -11,7 +11,7 @@ async function createKey() {
 export const CreateKeys = () => (
   <Panel>
     <BackLink />
-    <div>
+    <div class="text-left">
       This page is used to generate a public and private key. <br />
       Both keys are generated and shown client-side in your browser. <br />
       The public key is used to encrypt data. <br />

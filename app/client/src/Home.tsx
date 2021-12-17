@@ -102,7 +102,14 @@ export const Home = () => (
         <Button type="submit">Connect</Button>
         <div
           class={don(path().home.status.$path).map(
-            (s) => `text-left text-${s}-600`
+            (s) =>
+              `text-left ${
+                s === "red"
+                  ? "text-red-600"
+                  : s === "green"
+                  ? "text-green-600"
+                  : "text-black-600"
+              }`
           )}
         >
           {don(path().home.info)}
@@ -111,23 +118,9 @@ export const Home = () => (
     </form>
     <div class="flow flow-col">
       <div>
-        <Button onClick={() => (data.panel = "createKeys")}>Create keys</Button>
+        <p>Don't have a callsign?</p>
+        <Button onClick={() => (data.panel = "flow")}>Click here</Button>
       </div>
-      <div>
-        <Button onClick={() => (data.panel = "registerUser")}>
-          Register test/demo user
-        </Button>
-      </div>
-      <div>
-        <Button onClick={() => (data.panel = "uploadKey")}>
-          Create + upload test/demo keys
-        </Button>
-      </div>
-    </div>
-    <div>
-      <a href="https://github.com/eirikb/callsign#callsign" target="_blank">
-        How it works
-      </a>
     </div>
   </Panel>
 );

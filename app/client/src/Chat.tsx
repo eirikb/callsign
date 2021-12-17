@@ -240,17 +240,17 @@ export const Chat = () => (
                           <div class="col-start-1 col-end-8 rounded-lg">
                             <div class="flex items-center justify-start flex-row-reverse">
                               <div
-                                class={`text-${
+                                class={
                                   m.type === "error"
-                                    ? "red"
+                                    ? "text-red-500"
                                     : m.type === "info"
-                                    ? "blue"
+                                    ? "text-blue-500"
                                     : m.type === "success"
-                                    ? "green"
+                                    ? "text-green-500"
                                     : m.type === "warning"
-                                    ? "yellow"
-                                    : "gray"
-                                }-500`}
+                                    ? "text-yellow-500"
+                                    : "text-gray-500"
+                                }
                               >
                                 {m.text}
                               </div>

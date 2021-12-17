@@ -47,14 +47,14 @@ export const RegisterUser = () => {
         The public key will be stored on my server. Private key never leaves
         your device.
         <br />
-        The server is an old laptop with full disk encryption, located at my
-        home in Norway.
+        The server is a laptop with full disk encryption, located at my home in
+        Norway.
       </p>
       <form onSubmit={submit}>
         <fieldset>
           <p class="text-left">
             This means you will not have full end-to-end encryption, since I
-            will be, with some effort, able to decrypt the communication.
+            will, with some effort, <br /> be able to decrypt the communication.
           </p>
           <Input
             required={true}
@@ -90,7 +90,7 @@ export const RegisterUser = () => {
                   type="button"
                   onClick={() => (data.panel = "uploadKey")}
                 >
-                  Go to upload
+                  Go to key upload
                 </Button>
               </div>
             ))}

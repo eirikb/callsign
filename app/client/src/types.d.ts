@@ -80,12 +80,17 @@ interface UploadKey {
   showPrivateKey: boolean;
 }
 
+interface Flow {
+  subFlow: "init" | "selfHosted" | "demoUser";
+}
+
 interface Data {
-  panel: "home" | "chat" | "createKeys" | "registerUser" | "uploadKey";
+  panel: "home" | "chat" | "createKeys" | "registerUser" | "uploadKey" | "flow";
   connected: boolean;
   home: Home;
   chat: Chat;
   createKey: CreateKey;
   registerUser: RegisterUser;
   uploadKey: UploadKey;
+  flow: Flow;
 }
