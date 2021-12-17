@@ -6,6 +6,7 @@ import { RegisterUserQuery, RegisterUserReply } from "../../server/types";
 async function submit(e: Event) {
   e.preventDefault();
   data.registerUser.ok = true;
+  data.registerUser.showInfo = false;
   if (data.registerUser.password !== data.registerUser.password2) {
     data.registerUser.status = "Passwords do not match";
     data.registerUser.ok = false;
@@ -24,6 +25,9 @@ async function submit(e: Event) {
     );
     if (res.status == "created") {
       data.registerUser.status = "Created!";
+      data.registerUser.showInfo = true;
+      data.uploadKey.callsign = data.registerUser.callsign;
+      data.uploadKey.password = data.registerUser.password;
     } else {
       data.registerUser.ok = false;
       data.registerUser.status = "Already exists";
@@ -54,7 +58,7 @@ export const RegisterUser = () => {
           </p>
           <Input
             required={true}
-            label="Callsign"
+            label="Username"
             bind={path().registerUser.callsign.$path}
           />
           .callsign.network
@@ -75,15 +79,26 @@ export const RegisterUser = () => {
             okPath={path().registerUser.ok}
             statusPath={path().registerUser.status}
           />
-          {don(path().registerUser.ok)
+          {don(path().registerUser.showInfo)
             .filter((k) => k)
             .map(() => (
-              <Button type="button" onClick={() => (data.panel = "uploadKey")}>
-                Go to upload
-              </Button>
+              <div>
+                <div>
+                  User registered, you can now create and upload a new key.
+                </div>
+                <Button
+                  type="button"
+                  onClick={() => (data.panel = "uploadKey")}
+                >
+                  Go to upload
+                </Button>
+              </div>
             ))}
         </fieldset>
       </form>
+      <div>
+        <BackLink />
+      </div>
     </Panel>
   );
 };

@@ -8,17 +8,16 @@ import {
   Status,
   TextArea,
 } from "./components";
-import { exportPrivateKey, exportPublicKey, generateKey } from "./cryptomatic";
+import { exportPrivateKey, exportPublicKey, generateKeys } from "./cryptomatic";
 import { query } from "./transport";
 import { UploadKeyQuery, UploadKeyReply } from "../../server/types";
 
 async function submit(e: Event) {
-  console.log(1);
   e.preventDefault();
   data.uploadKey.ok = true;
   data.uploadKey.showPrivateKey = false;
   data.uploadKey.status = "Creating key...";
-  const keys = await generateKey();
+  const keys = await generateKeys();
   data.uploadKey.status = "Exporting public key...";
   data.uploadKey.publicKey = await exportPublicKey(keys.publicKey);
   data.uploadKey.status = "Exporting private key...";
@@ -51,9 +50,13 @@ async function submit(e: Event) {
 export const UploadKey = () => (
   <Panel>
     <BackLink />
+    <div>
+      This view will create a new key pair for you. <br />
+      And upload the public key to the server.
+    </div>
     <form onSubmit={submit}>
       <fieldset>
-        <Input bind={path().uploadKey.callsign.$path} label="Callsign" />
+        <Input bind={path().uploadKey.callsign.$path} label="Username" />
         .callsign.network
         <Input
           bind={path().uploadKey.password.$path}
@@ -85,7 +88,23 @@ export const UploadKey = () => (
               {`https://${data.uploadKey.callsign}.callsign.network/${data.uploadKey.callsign}.callsign.network.key`}
             </Link>
           </div>
+          <div>Your callsign is:</div>
+          <div>
+            <b>{data.uploadKey.callsign}.callsign.network</b>
+          </div>
+          <div>
+            You can now got to front page a log in using this callsign and the
+            key.
+          </div>
+          <div>
+            <Button type="button" onClick={() => (data.panel = "home")}>
+              Go to home
+            </Button>
+          </div>
         </div>
       ))}
+    <div>
+      <BackLink />
+    </div>
   </Panel>
 );

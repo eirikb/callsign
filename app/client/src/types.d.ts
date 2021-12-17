@@ -67,6 +67,7 @@ interface RegisterUser {
   password2: string;
   status: string;
   ok: boolean;
+  showInfo: boolean;
 }
 
 interface UploadKey {

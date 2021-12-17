@@ -30,6 +30,7 @@ const initial: Data = {
     password2: "",
     status: "",
     ok: false,
+    showInfo: false,
   },
   uploadKey: {
     callsign: "",
