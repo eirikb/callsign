@@ -58,7 +58,7 @@ async function connect() {
     }
   } catch (e) {
     console.error(e);
-    data.home.info = "red";
+    data.home.status = "red";
     data.home.info = "Unable to load key";
   }
   data.home.connecting = false;
@@ -101,15 +101,12 @@ export const Home = () => (
         </div>
         <Button type="submit">Connect</Button>
         <div
-          class={don(path().home.status.$path).map(
-            (s) =>
-              `text-left ${
-                s === "red"
-                  ? "text-red-600"
-                  : s === "green"
-                  ? "text-green-600"
-                  : "text-black-600"
-              }`
+          class={don(path().home.status.$path).map((s) =>
+            s === "red"
+              ? "text-red-600"
+              : s === "green"
+              ? "text-green-600"
+              : "text-black-600"
           )}
         >
           {don(path().home.info)}
