@@ -8,6 +8,7 @@ import {
   importSecretKey,
   secretEncrypt,
 } from "./cryptomatic";
+import { Button } from "./components";
 // import { sendMessage } from "./master-of-chat";
 
 const hex = (data: Buffer | string) => {
@@ -155,8 +156,25 @@ function logout() {
 
 export const Chat = () => (
   <div class="flex h-screen text-gray-800">
-    <div class="flex flex-row h-full w-full overflow-x-hidden">
-      <div class="flex flex-col py-8 pl-6 pr-2 w-64 bg-white flex-shrink-0">
+    <div class="w-12 flex flex-row h-full w-full overflow-x-hidden">
+      <div
+        class={don(path().chat.menuOpen).map(
+          (open) =>
+            `flex flex-col py-8 md:pl-6 sm:pl-0 pr-2 w-12 md:w-64 bg-white overflow-hidden flex-shrink-0 ${
+              open ? "w-64" : ""
+            }`
+        )}
+      >
+        <div
+          class="md:invisible mb-6 ml-1"
+          onClick={() => (data.chat.menuOpen = !data.chat.menuOpen)}
+        >
+          <svg viewBox="0 0 100 80" width="40" height="40">
+            <rect width="100" height="20" />
+            <rect y="30" width="100" height="20" />
+            <rect y="60" width="100" height="20" />
+          </svg>
+        </div>
         <div class="flex flex-row items-center justify-center h-12 w-full">
           <div class="ml-2 font-bold text-xl">
             {don(path().home.callsign)}
@@ -281,7 +299,7 @@ export const Chat = () => (
                     stroke-linejoin="round"
                     stroke-width="2"
                     d="M15.172 7l-6.586 6.586a2 2 0 102.828 2.828l6.414-6.586a4 4 0 00-5.656-5.656l-6.415 6.585a6 6 0 108.486 8.486L20.5 13"
-                  ></path>
+                  />
                 </svg>
               </button>
             </div>
@@ -305,7 +323,7 @@ export const Chat = () => (
                       stroke-linejoin="round"
                       stroke-width="2"
                       d="M14.828 14.828a4 4 0 01-5.656 0M9 10h.01M15 10h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
-                    ></path>
+                    />
                   </svg>
                 </button>
               </div>
@@ -326,7 +344,7 @@ export const Chat = () => (
                       stroke-linejoin="round"
                       stroke-width="2"
                       d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8"
-                    ></path>
+                    />
                   </svg>
                 </span>
               </button>

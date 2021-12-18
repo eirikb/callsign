@@ -19,6 +19,7 @@ const initial: Data = {
     sessions: {},
     selectedSession: "",
     text: "",
+    menuOpen: false,
   },
   createKey: {
     publicKey: "",

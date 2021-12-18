@@ -54,6 +54,7 @@ interface Chat {
   sessions: { [callsign: string]: Session };
   selectedSession: string;
   text: string;
+  menuOpen: boolean;
 }
 
 interface CreateKey {
