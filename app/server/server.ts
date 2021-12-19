@@ -56,13 +56,19 @@ const actions: { [key: string]: any } = {
     }
   },
 
-  msg(val: any) {
+  async msg(val: any, socket: WebSocket) {
     console.log("msg", val);
     const to = listeners[val.toCallsign];
     if (to) {
       for (const t of to) {
         t.send(JSON.stringify(val.value));
       }
+    } else {
+      send(socket, {
+        type: "msgInfo",
+        status: "notOnline",
+        toCallsign: val.toCallsign,
+      });
     }
   },
 };

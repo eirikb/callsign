@@ -82,7 +82,8 @@ export const Home = () => (
     </svg>
     <h1 class="text-3xl font-bold text-blue-500">Callsign</h1>
     <h3 class="text-1xl font-semibold text-gray-500">
-      Connect with your callsign
+      <b>True </b>
+      end-to-end encryption
     </h3>
     <form onsubmit={submit}>
       <fieldset disabled={don(path().home.connecting.$path)}>
