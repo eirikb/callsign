@@ -26,6 +26,7 @@ const actions: { [key: string]: any } = {
   listen({ callsign }: { callsign: string }, socket: WebSocket) {
     listeners[callsign] = listeners[callsign] || [];
     listeners[callsign]?.push(socket);
+    (socket as any).callsign = callsign;
   },
 
   async registerUser(val: RegisterUserQuery): Promise<RegisterUserReply> {
@@ -74,6 +75,7 @@ const actions: { [key: string]: any } = {
 
 wsServer.on("connection", (socket) => {
   console.log("connection!");
+
   socket.on("message", async (message: any) => {
     const d = JSON.parse(message);
     console.log(">", d);
@@ -93,6 +95,18 @@ wsServer.on("connection", (socket) => {
       }
     } catch (e) {
       send(socket, { error: e.message, type: "reply" });
+    }
+  });
+
+  socket.on("close", () => {
+    console.log("CLOSE!...");
+    const listenerList = listeners[(socket as any).callsign];
+    if (listenerList) {
+      const index = listenerList.indexOf(socket);
+      console.log("index", index);
+      console.log("before", listenerList.length);
+      listenerList.splice(index, 1);
+      console.log("after", listenerList.length);
     }
   });
 });
