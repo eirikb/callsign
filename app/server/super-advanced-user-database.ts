@@ -22,7 +22,6 @@ const data: { [callsign: string]: User } = {};
     for (const [key, val] of Object.entries(
       JSON.parse(await fs.readFile("./data/db.json", "utf-8"))
     )) {
-      console.log(key, val);
       data[key] = val as User;
     }
   } catch (ignored) {}
@@ -38,7 +37,6 @@ export async function verify(
 }
 
 export async function create(user: CreateUser): Promise<boolean> {
-  console.log("create!", saveQueue);
   await saveQueue;
   saveQueue = this;
   if (data[user.callsign]) return false;

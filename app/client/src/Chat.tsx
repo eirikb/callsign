@@ -8,13 +8,6 @@ import {
   importSecretKey,
   secretEncrypt,
 } from "./cryptomatic";
-import { Button } from "./components";
-// import { sendMessage } from "./master-of-chat";
-
-const hex = (data: Buffer | string) => {
-  const s = typeof data === "string" ? data : data.toString("hex");
-  return s.slice(0, 5).concat("...").concat(s.slice(-5));
-};
 
 const log = (logLevel: LogLevel, session: Session, text: string) =>
   session.lines.push({
@@ -36,9 +29,7 @@ function currentSession() {
 async function sendData(session: Session, d: any) {
   if (session.key) {
     const secret = await importSecretKey(session.key);
-    console.log("secret", secret);
     const [iv, cipher] = await secretEncrypt(secret, JSON.stringify(d));
-    console.log(iv, cipher);
     d = { from: data.home.callsign, iv, cipher };
   }
 
@@ -46,50 +37,9 @@ async function sendData(session: Session, d: any) {
   session.outgoing = Object.assign({ type: "msg" }, d);
 }
 
-// async function sendMessage(text: string) {
-//   const session = data.chat.sessions[normalize(data.chat.selectedSession)];
-//   if (session && session.key) {
-//     console.log("GOGOG", session.key, text);
-//     console.time("a");
-//     const key = await importPublicKey(session.key);
-//     console.timeEnd("a");
-//     console.log(key);
-//     console.time("b");
-//     const encrypted = await encrypt(key, text);
-//     console.timeEnd("b");
-//     console.log(encrypted);
-//     await sendData({ encrypted });
-//     session.lines.push({
-//       text,
-//       type: "from",
-//     });
-//   } else {
-//     warning(session, "No key");
-//   }
-// }
-
-// TODO: Remove
-// on("!+*", path().panel, (m) => {
-//   console.log(m, data.home.callsign);
-//   if (data.home.callsign === "a.callsign.network") {
-//     const callsign = "b.callsign.network";
-//     setTimeout(() => {
-//       data.chat.sessions[normalize(callsign)] = {
-//         callsign,
-//         direction: "outgoing",
-//         lines: [],
-//         outgoing: undefined,
-//         incoming: undefined,
-//         key: undefined,
-//       };
-//       data.chat.selectedSession = callsign;
-//     }, 500);
-//   }
-// });
-
 on("+", path().chat.sessions.$, async (session: Session) => {
   if (session.direction === "incoming") {
-    info(session, `Incoming session. Secret is ${hex(session.key)}`);
+    info(session, `Incoming session.`);
     await sendData(session, { action: "ok" });
     return;
   }
@@ -98,12 +48,12 @@ on("+", path().chat.sessions.$, async (session: Session) => {
   try {
     const publicKeyString = await fetchKey(session.callsign);
     if (publicKeyString) {
-      info(session, `Key fetched. ${hex(publicKeyString)}. Importing...`);
+      info(session, `Importing public key...`);
       const publicKey = await importPublicKey(publicKeyString);
-      info(session, "Imported. Creating new secret...");
+      info(session, "Generating new secret...");
       const secretKey = await generateSecretKey();
       const secret = await exportSecretKey(secretKey);
-      info(session, `Encrypting secret ${hex(secret)}`);
+      info(session, `Encrypting secret with public key...`);
       const encrypted = await encrypt(
         publicKey,
         JSON.stringify({
@@ -111,7 +61,7 @@ on("+", path().chat.sessions.$, async (session: Session) => {
           secret,
         })
       );
-      info(session, `Sending ${hex(encrypted)}`);
+      info(session, `Sending secret...`);
       await sendData(currentSession(), { encrypted });
       session.key = secret;
     } else {
@@ -166,7 +116,7 @@ export const Chat = () => (
         )}
       >
         <div
-          class="md:invisible mb-6 ml-1"
+          class="md:hidden mb-6 ml-1"
           onClick={() => (data.chat.menuOpen = !data.chat.menuOpen)}
         >
           <svg viewBox="0 0 100 80" width="40" height="40">

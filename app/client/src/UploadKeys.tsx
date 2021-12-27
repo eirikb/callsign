@@ -30,7 +30,6 @@ async function submit(e: Event) {
       password: data.uploadKey.password,
       publicKey: data.uploadKey.publicKey,
     });
-    console.log("res", res);
     if (res.status === "uploaded") {
       data.uploadKey.status = "All is well!";
       data.uploadKey.showPrivateKey = true;

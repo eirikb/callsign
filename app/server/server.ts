@@ -15,8 +15,10 @@ const app = express();
 
 const listeners: { [key: string]: any[] } = {};
 
-const send = (socket: ws.WebSocket, data: any) =>
+const send = (socket: ws.WebSocket, data: any) => {
+  console.log("<", data);
   socket.send(JSON.stringify(data));
+};
 
 const wsServer = new ws.Server({ noServer: true });
 
@@ -27,7 +29,6 @@ const actions: { [key: string]: any } = {
   },
 
   async registerUser(val: RegisterUserQuery): Promise<RegisterUserReply> {
-    console.log("va", val);
     const ok = await db.create({
       callsign: val.callsign,
       password: val.password,
@@ -35,7 +36,7 @@ const actions: { [key: string]: any } = {
     });
     if (ok) {
       // Trigger server to create https cert. Fire and forget.
-      https.get(`https://${val.callsign}.callsign.network`);
+      await https.get(`https://${val.callsign}.callsign.network`);
       return { status: "created" };
     } else {
       return { status: "alreadyExists" };
@@ -43,7 +44,6 @@ const actions: { [key: string]: any } = {
   },
 
   async uploadKey(val: UploadKeyQuery): Promise<UploadKeyReply> {
-    console.log("KEY!", val);
     if (await db.verify(val.callsign, val.password)) {
       const callsign = `${val.callsign}.callsign.network`;
       const dir = `./data/keys/${callsign}`;
@@ -57,7 +57,6 @@ const actions: { [key: string]: any } = {
   },
 
   async msg(val: any, socket: WebSocket) {
-    console.log("msg", val);
     const to = listeners[val.toCallsign];
     if (to) {
       for (const t of to) {
@@ -77,7 +76,7 @@ wsServer.on("connection", (socket) => {
   console.log("connection!");
   socket.on("message", async (message: any) => {
     const d = JSON.parse(message);
-    console.log(d);
+    console.log(">", d);
     const action: any = actions[d.type];
     try {
       if (action) {
