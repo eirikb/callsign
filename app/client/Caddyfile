@@ -2,17 +2,24 @@ callsign.network {
   file_server {
     root /data/client
   }
+  encode gzip
 
   reverse_proxy /api server:3000
 }
 
 *.callsign.network {
   tls {
-    on_demand
+    dns lego_deprecated domeneshop
   }
   file_server {
-    root /data/caddy/certificates/acme-v02.api.letsencrypt.org-directory/{host}
-    hide *.key
+    root /data/keys/{host}
+  }
+  header Access-Control-Allow-Origin *
+}
+
+eirikb.no {
+  file_server {
+    root /data/keys/eirikb.no
   }
   header Access-Control-Allow-Origin *
 }

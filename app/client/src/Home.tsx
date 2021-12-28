@@ -1,5 +1,5 @@
 import { data, on, don, path, React } from "./dd";
-import { Button, Input, Panel } from "./components";
+import { Button, Input, Panel, SmallButton } from "./components";
 import {
   decrypt,
   encrypt,
@@ -115,9 +115,21 @@ export const Home = () => (
       </fieldset>
     </form>
     <div class="flow flow-col">
+      <p>Don't have a callsign?</p>
       <div>
-        <p>Don't have a callsign?</p>
-        <Button onClick={() => (data.panel = "flow")}>Click here</Button>
+        <SmallButton onClick={() => (data.panel = "createKeys")}>
+          Create key pair
+        </SmallButton>
+      </div>
+      <div>
+        <SmallButton onClick={() => (data.panel = "registerUser")}>
+          Register demo user
+        </SmallButton>
+      </div>
+      <div>
+        <SmallButton onClick={() => (data.panel = "uploadKey")}>
+          Create demo keys
+        </SmallButton>
       </div>
     </div>
   </Panel>

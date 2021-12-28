@@ -60,6 +60,19 @@ export const Button = (
   </button>
 );
 
+export const SmallButton = (
+  { onClick = () => {}, type = "button" },
+  { children }
+) => (
+  <button
+    type={type}
+    onClick={onClick}
+    class="bg-cyan-200 pr-5 pl-5 text-gray-800 font-semibold border-cyan-700 focus:ring-2"
+  >
+    {children}
+  </button>
+);
+
 export const Status = ({ okPath, statusPath }) => (
   <div class={don(okPath).map((k) => (k ? "text-black-500" : "text-red-500"))}>
     {don(statusPath)}

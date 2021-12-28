@@ -1,0 +1,20 @@
+version: '3'
+services:
+  callsign:
+    restart: always
+    build: client
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./data/certs:/data/caddy/certificates
+      - ./data/server/keys:/data/keys:ro
+    environment:
+      - DOMENESHOP_API_TOKEN=${DOMENESHOP_API_TOKEN}
+      - DOMENESHOP_API_SECRET=${DOMENESHOP_API_SECRET}
+
+  server:
+    restart: always
+    build: server
+    volumes:
+      - ./data/server:/app/data
