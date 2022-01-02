@@ -66,10 +66,11 @@ export const UploadKey = () => (
       .filter((k) => k)
       .map(() => (
         <div class="text-left">
+          Public key uploaded! <br />
           Copy the private key below and keep it safe. <br />
           Storing it in a password manager should be safe.
           <div>
-            <textarea class="w-full h-40 border">
+            <textarea class="w-full h-40 border mt-10 mb-10">
               {data.uploadKey.privateKey}
             </textarea>
           </div>
