@@ -1,13 +1,5 @@
 import { data, don, path, React } from "./dd";
-import {
-  BackLink,
-  Button,
-  Input,
-  Link,
-  Panel,
-  Status,
-  TextArea,
-} from "./components";
+import { BackLink, Button, Input, Link, Panel, Status } from "./components";
 import { exportPrivateKey, exportPublicKey, generateKeys } from "./cryptomatic";
 import { query } from "./transport";
 import { UploadKeyQuery, UploadKeyReply } from "../../server/types";

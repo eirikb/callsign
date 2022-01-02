@@ -42,9 +42,6 @@ const initial: Data = {
     privateKey: "",
     showPrivateKey: false,
   },
-  flow: {
-    subFlow: "init",
-  },
 };
 
 const dd = domdom<Data>(initial);

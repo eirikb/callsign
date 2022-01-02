@@ -7,13 +7,25 @@ if (module.hot) {
 import { RegisterUser } from "./RegisterUser";
 import "./style.css";
 
-import { don, data, init, path, React } from "./dd";
+import { don, on, data, init, path, React } from "./dd";
 import { Home } from "./Home";
 import { Chat } from "./Chat";
 import { CreateKeys } from "./CreateKey";
 import "./transport";
 import { UploadKey } from "./UploadKeys";
-import { Flow } from "./Flow";
+
+const domainifyis = (url: string): string =>
+  (url || "").toLowerCase().replace(" ", "");
+
+on("!+*", path().home.callsign, (c) => {
+  data.home.callsign = domainifyis(c);
+});
+on("!+*", path().registerUser.callsign, (c) => {
+  data.registerUser.callsign = domainifyis(c);
+});
+on("!+*", path().uploadKey.callsign, (c) => {
+  data.uploadKey.callsign = domainifyis(c);
+});
 
 init(
   document.body,
@@ -28,8 +40,6 @@ init(
           return <RegisterUser />;
         case "uploadKey":
           return <UploadKey />;
-        case "flow":
-          return <Flow />;
         default:
           return <Home />;
       }

@@ -1,4 +1,4 @@
-import { React, data, don, path } from "./dd";
+import { React, data, don } from "./dd";
 
 export const Panel = ({}, { children }) => (
   <div class="flex h-screen">

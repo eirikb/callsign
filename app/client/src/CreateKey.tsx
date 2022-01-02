@@ -1,4 +1,4 @@
-import { data, don, path, React } from "./dd";
+import { data, path, React } from "./dd";
 import { exportPrivateKey, exportPublicKey, generateKeys } from "./cryptomatic";
 import { BackLink, Button, Input, Panel, TextArea } from "./components";
 
