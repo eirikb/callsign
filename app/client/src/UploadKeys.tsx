@@ -23,7 +23,7 @@ async function submit(e: Event) {
       publicKey: data.uploadKey.publicKey,
     });
     if (res.status === "uploaded") {
-      data.uploadKey.status = "All is well!";
+      data.uploadKey.status = "";
       data.uploadKey.showPrivateKey = true;
 
       data.home.callsign = data.uploadKey.callsign + ".callsign.network";
@@ -65,11 +65,13 @@ export const UploadKey = () => (
     {don(path().uploadKey.showPrivateKey)
       .filter((k) => k)
       .map(() => (
-        <div>
+        <div class="text-left">
           Copy the private key below and keep it safe. <br />
           Storing it in a password manager should be safe.
           <div>
-            <textarea>{data.uploadKey.privateKey}</textarea>
+            <textarea class="w-full h-40 border">
+              {data.uploadKey.privateKey}
+            </textarea>
           </div>
           <div>Your public key will be located here:</div>
           <div>
@@ -80,18 +82,13 @@ export const UploadKey = () => (
               {`https://${data.uploadKey.callsign}.callsign.network/${data.uploadKey.callsign}.callsign.network.key`}
             </Link>
           </div>
-          <div>Your callsign is:</div>
           <div>
-            <b>{data.uploadKey.callsign}.callsign.network</b>
+            Your callsign is: <b>{data.uploadKey.callsign}.callsign.network</b>
           </div>
           <div>
-            You can now got to front page a log in using this callsign and the
-            key.
+            You can now got to front page and log in using this callsign and the
+            key. <br /> The callsign and key should be prefilled.
           </div>
-          <p>
-            Note: It can be a good idea to wait at least 1 minute before trying,{" "}
-            <br /> in order for the server to set up a new domain with https .
-          </p>
           <div>
             <Button type="button" onClick={() => (data.panel = "home")}>
               Go to home
