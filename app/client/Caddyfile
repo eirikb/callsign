@@ -5,6 +5,15 @@ callsign.network {
   encode gzip
 
   reverse_proxy /api server:3000
+
+  header {
+    Content-Security-Policy "default-src 'self' https:"
+    Permissions-Policy interest-cohort=()
+    Strict-Transport-Security max-age=31536000;
+    X-Content-Type-Options nosniff
+    X-Frame-Options DENY
+    Referrer-Policy: no-referrer
+  }
 }
 
 *.callsign.network {
