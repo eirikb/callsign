@@ -2,7 +2,7 @@ import { data, don, path, React } from "./dd";
 import { BackLink, Button, Input, Link, Panel, Status } from "./components";
 import { exportPrivateKey, exportPublicKey, generateKeys } from "./cryptomatic";
 import { query } from "./transport";
-import { UploadKeyQuery, UploadKeyReply } from "../../server/types";
+import { UploadKeyQuery, UploadKeyReply } from "../../server-relay/types";
 
 async function submit(e: Event) {
   e.preventDefault();

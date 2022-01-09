@@ -1,7 +1,4 @@
 {
-  "scripts": {
-    "start": "parcel --hmr-port 1235 src/index.html"
-  },
   "devDependencies": {
     "parcel": "^2.0.1",
     "postcss": "^8.3.11",

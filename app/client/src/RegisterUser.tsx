@@ -1,7 +1,7 @@
 import { data, don, path, React } from "./dd";
 import { BackLink, Button, Input, Panel, Status } from "./components";
 import { query } from "./transport";
-import { RegisterUserQuery, RegisterUserReply } from "../../server/types";
+import { RegisterUserQuery, RegisterUserReply } from "../../server-relay/types";
 
 async function submit(e: Event) {
   e.preventDefault();

@@ -4,7 +4,8 @@ callsign.network {
   }
   encode gzip
 
-  reverse_proxy /api server:3000
+  reverse_proxy /relay server-relay:3001
+  reverse_proxy /demo server-demo:3002
 
   header {
     Content-Security-Policy "default-src 'self' https:"

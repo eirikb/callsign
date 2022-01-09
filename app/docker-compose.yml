@@ -15,6 +15,6 @@ services:
 
   server:
     restart: always
-    build: server
+    build: server-relay
     volumes:
       - ./data/server:/app/data

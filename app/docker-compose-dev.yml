@@ -1,0 +1,26 @@
+version: '3'
+services:
+  callsign:
+    image: node:16
+    ports:
+      - "1234:1234"
+    volumes:
+      - ./data/certs:/data/caddy/certificates
+      - ./data/server/keys:/data/keys:ro
+      - ./client:/app
+    working_dir: /app
+    command: ./node_modules/.bin/parcel ./src/index.html
+
+  server-relay:
+    image: node:16
+    volumes:
+      - ./server-relay:/app
+    working_dir: /app
+    command: ./node_modules/.bin/ts-node --files server.ts
+
+  server-demo:
+    image: node:16
+    volumes:
+      - ./server-demo:/app
+    working_dir: /app
+    command: ./node_modules/.bin/ts-node --files server.ts

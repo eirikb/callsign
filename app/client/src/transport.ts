@@ -1,7 +1,7 @@
 // setTimeout because
 
 import { data, normalize, on, path } from "./dd";
-import { queryTypes } from "../../server/types";
+import { queryTypes } from "../../server-relay/types";
 import {
   decrypt,
   importPrivateKey,
