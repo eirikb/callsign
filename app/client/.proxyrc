@@ -1,9 +1,9 @@
 {
   "/relay": {
-    "target": "http://server:3001",
+    "target": "http://server-relay:3001",
     "ws": true
   },
   "/demo": {
-    "target": "http://server:3002"
+    "target": "http://server-demo:3002"
   }
 }

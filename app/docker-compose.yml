@@ -13,8 +13,12 @@ services:
       - DOMENESHOP_API_TOKEN=${DOMENESHOP_API_TOKEN}
       - DOMENESHOP_API_SECRET=${DOMENESHOP_API_SECRET}
 
-  server:
+  server-relay:
     restart: always
     build: server-relay
+
+  server-demo:
+    restart: always
+    build: server-demo
     volumes:
       - ./data/server:/app/data

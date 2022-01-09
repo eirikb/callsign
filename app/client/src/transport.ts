@@ -48,16 +48,14 @@ on("+!*", path().panel, (p) => {
   }
 });
 
-// Imagine you haven't seen the next few lines, and continue with your life
-let resolveHack: any;
-let rejectHack: any;
-
 export async function query<T, R>(type: queryTypes, data: T): Promise<R> {
-  return new Promise((resolve, reject) => {
-    resolveHack = resolve;
-    rejectHack = reject;
-    ws?.send(JSON.stringify(Object.assign({ type }, data)));
-  });
+  return fetch(`/demo/${type}`, {
+    method: "POST",
+    headers: {
+      "content-type": "application/json",
+    },
+    body: JSON.stringify(data),
+  }).then((r) => r.json()) as unknown as R;
 }
 
 function connect() {
@@ -105,14 +103,6 @@ function connect() {
           text: d.text,
           type: "to",
         });
-      }
-      return;
-    }
-
-    if (val.type === "reply") {
-      if (resolveHack && rejectHack) {
-        if (val.error) rejectHack(val.error);
-        else resolveHack(val);
       }
       return;
     }
