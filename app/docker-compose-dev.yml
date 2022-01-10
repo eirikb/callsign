@@ -1,9 +1,14 @@
 version: '3'
 services:
-  callsign:
-    image: node:16
+  server:
+    image: caddy
     ports:
       - "1234:1234"
+    volumes:
+      - ./client/Caddyfile-dev:/etc/caddy/Caddyfile:ro
+
+  client:
+    image: node:16
     volumes:
       - ./data/certs:/data/caddy/certificates
       - ./data/server/keys:/data/keys:ro

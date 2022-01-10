@@ -1,0 +1,10 @@
+{
+    auto_https off
+    http_port 1234
+}
+
+localhost:1234 {
+    reverse_proxy /* client:1234
+    reverse_proxy /relay server-relay:3001
+    reverse_proxy /demo/* server-demo:3002
+}

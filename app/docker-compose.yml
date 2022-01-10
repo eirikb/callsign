@@ -16,9 +16,11 @@ services:
   server-relay:
     restart: always
     build: server-relay
+    command: ./node_modules/.bin/ts-node --files server.ts
 
   server-demo:
     restart: always
     build: server-demo
     volumes:
       - ./data/server:/app/data
+    command: ./node_modules/.bin/ts-node --files server.ts

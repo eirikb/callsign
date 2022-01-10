@@ -60,9 +60,10 @@ export async function query<T, R>(type: queryTypes, data: T): Promise<R> {
 
 function connect() {
   ws = new WebSocket(
-    `${location.protocol === "http:" ? "ws" : "wss"}://${location.host}/api`
+    `${location.protocol === "http:" ? "ws" : "wss"}://${location.host}/relay`
   );
   ws.addEventListener("open", () => {
+    console.log("Connected");
     listen();
     data.connected = true;
   });
