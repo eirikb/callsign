@@ -3,10 +3,10 @@ import {
   encrypt,
   exportSecretKey,
   fetchKey,
-  generateSecretKey,
+  // generateSecretKey,
   importPublicKey,
-  importSecretKey,
-  secretEncrypt,
+  // importSecretKey,
+  // secretEncrypt,
 } from "./cryptomatic";
 
 const log = (logLevel: LogLevel, session: Session, text: string) =>
@@ -28,9 +28,9 @@ function currentSession() {
 
 async function sendData(session: Session, d: any) {
   if (session.key) {
-    const secret = await importSecretKey(session.key);
-    const [iv, cipher] = await secretEncrypt(secret, JSON.stringify(d));
-    d = { from: data.home.callsign, iv, cipher };
+    // const secret = await importSecretKey(session.key);
+    // const [iv, cipher] = await secretEncrypt(secret, JSON.stringify(d));
+    // d = { from: data.home.callsign, iv, cipher };
   }
 
   session.outgoing = undefined;
@@ -51,19 +51,19 @@ on("+", path().chat.sessions.$, async (session: Session) => {
       info(session, `Importing public key...`);
       const publicKey = await importPublicKey(publicKeyString);
       info(session, "Generating new secret...");
-      const secretKey = await generateSecretKey();
-      const secret = await exportSecretKey(secretKey);
+      // const secretKey = await generateSecretKey();
+      // const secret = await exportSecretKey(secretKey);
       info(session, `Encrypting secret with public key...`);
-      const encrypted = await encrypt(
-        publicKey,
-        JSON.stringify({
-          from: data.home.callsign,
-          secret,
-        })
-      );
+      // const encrypted = await encrypt(
+      //   publicKey,
+      //   JSON.stringify({
+      //     from: data.home.callsign,
+      //     secret,
+      //   })
+      // );
       info(session, `Sending secret...`);
-      await sendData(currentSession(), { encrypted });
-      session.key = secret;
+      // await sendData(currentSession(), { encrypted });
+      // session.key = secret;
     } else {
       warning(session, "Key failed");
     }

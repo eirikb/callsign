@@ -5,8 +5,8 @@ import { queryTypes } from "../../server-relay/types";
 import {
   decrypt,
   importPrivateKey,
-  importSecretKey,
-  secretDecrypt,
+  // importSecretKey,
+  // secretDecrypt,
 } from "./cryptomatic";
 
 let ws: WebSocket | undefined = undefined;
@@ -73,38 +73,38 @@ function connect() {
 
     if (val.encrypted) {
       const privateKey = await importPrivateKey(data.home.key);
-      const decrypted = await decrypt(privateKey, val.encrypted);
-      const d = JSON.parse(decrypted);
-      if (d.from && d.secret) {
-        const callsign = d.from;
-        data.chat.sessions[normalize(callsign)] = {
-          callsign,
-          direction: "incoming",
-          lines: [],
-          outgoing: undefined,
-          incoming: undefined,
-          key: d.secret,
-        };
-      }
+      // const decrypted = await decrypt(privateKey, val.encrypted);
+      // const d = JSON.parse(decrypted);
+      // if (d.from && d.secret) {
+      //   const callsign = d.from;
+      //   data.chat.sessions[normalize(callsign)] = {
+      //     callsign,
+      //     direction: "incoming",
+      //     lines: [],
+      //     outgoing: undefined,
+      //     incoming: undefined,
+      //     key: d.secret,
+      //   };
+      // }
       return;
     }
 
     if (val.cipher) {
       const session = data.chat.sessions[normalize(val.from)];
-      const secret = await importSecretKey(session.key);
-      const decrypt = await secretDecrypt(secret, val.iv, val.cipher);
-      const d = JSON.parse(decrypt);
-      if (d.action) {
-        session.lines.push({
-          text: d.action,
-          type: "info",
-        });
-      } else {
-        session.lines.push({
-          text: d.text,
-          type: "to",
-        });
-      }
+      // const secret = await importSecretKey(session.key);
+      // const decrypt = await secretDecrypt(secret, val.iv, val.cipher);
+      // const d = JSON.parse(decrypt);
+      // if (d.action) {
+      //   session.lines.push({
+      //     text: d.action,
+      //     type: "info",
+      //   });
+      // } else {
+      //   session.lines.push({
+      //     text: d.text,
+      //     type: "to",
+      //   });
+      // }
       return;
     }
 
