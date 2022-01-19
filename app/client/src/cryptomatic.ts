@@ -1,6 +1,8 @@
-const publicKeyAlgorithm = "RSA-OAEP";
 const secretKeyAlgorithm = "AES-GCM";
-const hashAlgorithm = "SHA-256";
+const algorithm = {
+  name: "ECDSA",
+  namedCurve: "P-384",
+};
 
 function arrayBufferToBase64(buffer: ArrayBuffer) {
   let binary = "";
@@ -26,16 +28,14 @@ export async function fetchKey(callsign: string) {
   return fetch(`https://${callsign}/${callsign}.key`).then((r) => r.text());
 }
 
-export async function generateKeys() {
+export async function generateDeriveKeys() {
   return window.crypto.subtle.generateKey(
     {
-      name: publicKeyAlgorithm,
-      modulusLength: 4096,
-      publicExponent: new Uint8Array([1, 0, 1]),
-      hash: hashAlgorithm,
+      name: "ECDH",
+      namedCurve: "P-384",
     },
     true,
-    ["encrypt", "decrypt"]
+    ["deriveKey"]
   );
 }
 
@@ -51,58 +51,20 @@ export async function exportPublicKey(publicKey) {
 
 export async function importPrivateKey(privateKey) {
   const privK = base64ToArrayBuffer(privateKey);
-  return window.crypto.subtle.importKey(
-    "pkcs8",
-    privK,
-    {
-      name: publicKeyAlgorithm,
-      hash: hashAlgorithm,
-    },
-    false,
-    ["decrypt"]
-  );
+  return window.crypto.subtle.importKey("pkcs8", privK, algorithm, false, [
+    "sign",
+  ]);
 }
 
-export async function importPublicKey(publicKey) {
-  const pubK = base64ToArrayBuffer(publicKey);
-  return window.crypto.subtle.importKey(
-    "spki",
-    pubK,
+export async function derive(publicKey, privateKey) {
+  return window.crypto.subtle.deriveKey(
     {
-      name: publicKeyAlgorithm,
-      hash: hashAlgorithm,
-    },
-    false,
-    ["encrypt"]
-  );
-}
-
-export async function encrypt(publicKey, text) {
-  const encrypted = await window.crypto.subtle.encrypt(
-    {
-      name: publicKeyAlgorithm,
-    },
-    publicKey,
-    new TextEncoder().encode(text)
-  );
-  return arrayBufferToBase64(encrypted);
-}
-
-export async function decrypt(privateKey, base64) {
-  const decrypted = await window.crypto.subtle.decrypt(
-    {
-      name: publicKeyAlgorithm,
+      name: "ECDH",
+      public: publicKey,
     },
     privateKey,
-    base64ToArrayBuffer(base64)
-  );
-  return new TextDecoder().decode(decrypted);
-}
-
-export async function generateSecretKey() {
-  return window.crypto.subtle.generateKey(
     {
-      name: secretKeyAlgorithm,
+      name: "AES-GCM",
       length: 256,
     },
     true,
@@ -110,25 +72,47 @@ export async function generateSecretKey() {
   );
 }
 
+export async function importPublicKey(publicKey) {
+  const pubK = base64ToArrayBuffer(publicKey);
+  return window.crypto.subtle.importKey("spki", pubK, algorithm, false, [
+    "verify",
+  ]);
+}
+
+export async function generateSignKeys() {
+  return window.crypto.subtle.generateKey(algorithm, true, ["sign", "verify"]);
+}
+
 export async function exportSecretKey(key) {
   const kOut = await window.crypto.subtle.exportKey("raw", key);
   return arrayBufferToBase64(kOut);
 }
 
-export async function importSecretKey(keyString) {
-  const key = base64ToArrayBuffer(keyString);
-  return window.crypto.subtle.importKey(
-    "raw",
-    key,
+export async function sign(privateKey, encoded: string): Promise<string> {
+  const signature = await window.crypto.subtle.sign(
     {
-      name: secretKeyAlgorithm,
+      name: "ECDSA",
+      hash: { name: "SHA-384" },
     },
-    true,
-    ["encrypt", "decrypt"]
+    privateKey,
+    base64ToArrayBuffer(encoded)
+  );
+  return arrayBufferToBase64(signature);
+}
+
+export async function verify(publicKey, signature: string, encoded: string) {
+  return window.crypto.subtle.verify(
+    {
+      name: "ECDSA",
+      hash: { name: "SHA-384" },
+    },
+    publicKey,
+    base64ToArrayBuffer(signature),
+    base64ToArrayBuffer(encoded)
   );
 }
 
-export async function secretEncrypt(secretKey, text) {
+export async function encrypt(secretKey, text) {
   const iv = window.crypto.getRandomValues(new Uint8Array(12));
   const encrypted = await window.crypto.subtle.encrypt(
     {
@@ -141,7 +125,7 @@ export async function secretEncrypt(secretKey, text) {
   return [arrayBufferToBase64(iv), arrayBufferToBase64(encrypted)];
 }
 
-export async function secretDecrypt(secretKey, iv, base64) {
+export async function decrypt(secretKey, iv, base64) {
   const decrypted = await window.crypto.subtle.decrypt(
     {
       name: secretKeyAlgorithm,
