@@ -38,9 +38,14 @@ async function connect() {
   data.home.status = "black";
   try {
     data.home.info = "Importing private key...";
+    console.log(1);
+    console.log(data.home.key);
     const privateKey = await importPrivateKey(data.home.key);
+    console.log(2);
     data.home.info = "Loading public key...";
+    console.log(3);
     const publicKeyString = await fetchKey(data.home.callsign);
+    console.log(4);
     data.home.info = "Importing public key...";
     const publicKey = await importPublicKey(publicKeyString);
     data.home.info = "Verifying keys...";
@@ -66,6 +71,7 @@ async function connect() {
 
 export const Home = () => (
   <Panel>
+    hi
     <svg
       xmlns="http://www.w3.org/2000/svg"
       class="inline h-6 w-6"
