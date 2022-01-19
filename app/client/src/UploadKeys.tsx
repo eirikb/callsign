@@ -1,6 +1,10 @@
 import { data, don, path, React } from "./dd";
 import { BackLink, Button, Input, Link, Panel, Status } from "./components";
-import { exportPrivateKey, exportPublicKey, generateKeys } from "./cryptomatic";
+import {
+  exportPrivateKey,
+  exportPublicKey,
+  generateSignKeys,
+} from "./cryptomatic";
 import { query } from "./transport";
 import { UploadKeyQuery, UploadKeyReply } from "../../server-relay/types";
 
@@ -9,7 +13,7 @@ async function submit(e: Event) {
   data.uploadKey.ok = true;
   data.uploadKey.showPrivateKey = false;
   data.uploadKey.status = "Creating key...";
-  const keys = await generateKeys();
+  const keys = await generateSignKeys();
   data.uploadKey.status = "Exporting public key...";
   data.uploadKey.publicKey = await exportPublicKey(keys.publicKey);
   data.uploadKey.status = "Exporting private key...";

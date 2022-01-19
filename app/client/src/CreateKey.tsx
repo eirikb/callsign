@@ -1,9 +1,13 @@
 import { data, path, React } from "./dd";
-import { exportPrivateKey, exportPublicKey, generateKeys } from "./cryptomatic";
+import {
+  exportPrivateKey,
+  exportPublicKey,
+  generateSignKeys,
+} from "./cryptomatic";
 import { BackLink, Button, Input, Panel, TextArea } from "./components";
 
 async function createKey() {
-  const keys = await generateKeys();
+  const keys = await generateSignKeys();
   data.createKey.publicKey = await exportPublicKey(keys.publicKey);
   data.createKey.privateKey = await exportPrivateKey(keys.privateKey);
 }
