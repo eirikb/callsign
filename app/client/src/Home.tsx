@@ -1,11 +1,11 @@
 import { data, on, don, path, React } from "./dd";
 import { Button, Input, Panel, SmallButton } from "./components";
 import {
-  decrypt,
-  encrypt,
   fetchKey,
   importPrivateKey,
   importPublicKey,
+  sign,
+  verify,
 } from "./cryptomatic";
 
 on("!+*", path().connected, (c) => {
@@ -38,20 +38,16 @@ async function connect() {
   data.home.status = "black";
   try {
     data.home.info = "Importing private key...";
-    console.log(1);
-    console.log(data.home.key);
     const privateKey = await importPrivateKey(data.home.key);
-    console.log(2);
     data.home.info = "Loading public key...";
-    console.log(3);
     const publicKeyString = await fetchKey(data.home.callsign);
-    console.log(4);
     data.home.info = "Importing public key...";
     const publicKey = await importPublicKey(publicKeyString);
     data.home.info = "Verifying keys...";
-    const encrypted = await encrypt(publicKey, "Hello, world!");
-    const output = await decrypt(privateKey, encrypted);
-    if (output === "Hello, world!") {
+    const d = window.btoa("Hello, world!");
+    const signed = await sign(privateKey, d);
+    const verified = await verify(publicKey, signed, d);
+    if (verified) {
       data.home.status = "green";
       data.home.info = "VERIFIED!";
       setTimeout(() => {
