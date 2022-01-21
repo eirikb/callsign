@@ -2,17 +2,16 @@ type MessageType = "key" | "key2" | "key3" | "msg";
 type Store = "localStorage" | "sessionStorage" | "none";
 
 interface Message {
-  fromCallsign: string;
-  type: MessageType;
+  action: "key1" | "key2" | "key3";
 }
 
-interface MsgKey extends Message {
-  key: string;
+interface MsgKey1 extends Message {
+  publicDeriveKey: string;
 }
 
 interface MsgKey2 extends Message {
-  key: string;
-  sign: string;
+  publicDeriveKey: string;
+  signed: string;
 }
 
 interface MsgKey3 extends Message {

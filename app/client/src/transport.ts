@@ -21,7 +21,7 @@ on("!+*", path().chat.sessions.$.outgoing, async (outgoing, { $ }) => {
     send({
       type: "msg",
       toCallsign: session.callsign,
-      value: outgoing,
+      value: { ...outgoing, fromCallsign: data.home.callsign },
     });
   } catch (e) {
     console.error(e);
@@ -113,11 +113,11 @@ function connect() {
       return;
     }
 
-    const session = data.chat.sessions[val.fromCallsign];
+    const session = data.chat.sessions[normalize(val.fromCallsign)];
     if (session) {
       session.incoming = val;
     } else {
-      data.chat.sessions[val.fromCallsign] = {
+      data.chat.sessions[normalize(val.fromCallsign)] = {
         callsign: val.fromCallsign,
         lines: [],
         direction: "incoming",

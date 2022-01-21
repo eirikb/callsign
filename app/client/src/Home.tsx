@@ -2,8 +2,8 @@ import { data, on, don, path, React } from "./dd";
 import { Button, Input, Panel, SmallButton } from "./components";
 import {
   fetchKey,
-  importPrivateKey,
-  importPublicKey,
+  importPrivateSignKey,
+  importPublicSignKey,
   sign,
   verify,
 } from "./cryptomatic";
@@ -37,12 +37,12 @@ async function connect() {
   data.home.connecting = true;
   data.home.status = "black";
   try {
-    data.home.info = "Importing private key...";
-    const privateKey = await importPrivateKey(data.home.key);
+    data.home.info = "Importing private sign key...";
+    const privateKey = await importPrivateSignKey(data.home.key);
     data.home.info = "Loading public key...";
     const publicKeyString = await fetchKey(data.home.callsign);
-    data.home.info = "Importing public key...";
-    const publicKey = await importPublicKey(publicKeyString);
+    data.home.info = "Importing public sign key...";
+    const publicKey = await importPublicSignKey(publicKeyString);
     data.home.info = "Verifying keys...";
     const d = window.btoa("Hello, world!");
     const signed = await sign(privateKey, d);

@@ -1,13 +1,30 @@
-import { on, don, data, path, React, reset, normalize } from "./dd";
+import { data, don, normalize, on, path, React, reset } from "./dd";
 import {
-  encrypt,
+  derive,
+  exportPublicKey,
   exportSecretKey,
   fetchKey,
-  // generateSecretKey,
-  importPublicKey,
-  // importSecretKey,
-  // secretEncrypt,
+  generateDeriveKeys,
+  importPrivateSignKey,
+  importPublicDeriveKey,
+  importPublicSignKey,
+  sign,
 } from "./cryptomatic";
+
+// TODO:
+setTimeout(() => {
+  if (data.home.callsign === "a.callsign.network") {
+    data.chat.sessions[normalize("b.callsign.network")] = {
+      callsign: "b.callsign.network",
+      direction: "outgoing",
+      incoming: undefined,
+      key: undefined,
+      lines: [],
+      outgoing: undefined,
+    };
+    data.chat.selectedSession = normalize("b.callsign.network");
+  }
+}, 2000);
 
 const log = (logLevel: LogLevel, session: Session, text: string) =>
   session.lines.push({
@@ -26,7 +43,7 @@ function currentSession() {
   return data.chat.sessions[normalize(data.chat.selectedSession)];
 }
 
-async function sendData(session: Session, d: any) {
+async function sendData<T>(session: Session, d: T) {
   if (session.key) {
     // const secret = await importSecretKey(session.key);
     // const [iv, cipher] = await secretEncrypt(secret, JSON.stringify(d));
@@ -34,36 +51,82 @@ async function sendData(session: Session, d: any) {
   }
 
   session.outgoing = undefined;
-  session.outgoing = Object.assign({ type: "msg" }, d);
+  session.outgoing = d;
 }
 
-on("+", path().chat.sessions.$, async (session: Session) => {
-  if (session.direction === "incoming") {
+on("!+*", path().chat.sessions.$.incoming, async (incomingRaw: any, { $ }) => {
+  const session = data.chat.sessions[$];
+  const action = incomingRaw.action;
+  if (action === "key1") {
     info(session, `Incoming session.`);
-    await sendData(session, { action: "ok" });
+    const incoming = incomingRaw as MsgKey1;
+    info(session, `Importing public derive key...`);
+    const publicDeriveKey = await importPublicDeriveKey(
+      incoming.publicDeriveKey
+    );
+    info(session, `Generating new derive key...`);
+    const deriveKeys = await generateDeriveKeys();
+    info(session, `Creating new secret...`);
+    const secret = await derive(publicDeriveKey, deriveKeys.privateKey);
+    info(session, "Exporting secret...");
+    const exportedSecret = await exportSecretKey(secret);
+    info(session, `Importing sign key...`);
+    const signKey = await importPrivateSignKey(data.home.key);
+    info(session, `Signing secret...`);
+    const signed = await sign(signKey, exportedSecret);
+    info(session, "Exporting public derive key...");
+    const myPublicDeriveKey = await exportPublicKey(deriveKeys.publicKey);
+
+    info(session, "Sending public derive key + signed...");
+    await sendData<MsgKey2>(session, {
+      action: "key2",
+      publicDeriveKey: myPublicDeriveKey,
+      signed,
+    });
+  } else if (action === "key2") {
+    const incoming = incomingRaw as MsgKey2;
+    console.log(JSON.stringify(session));
+    // Huh
+    setTimeout(() => {
+      info(session, `Importing public derive key...`);
+    }, 100);
+    // const publicDeriveKey = await importPublicDeriveKey(
+    //   incoming.publicDeriveKey
+    // );
+  }
+});
+
+on("+", path().chat.sessions.$, async (session: Session) => {
+  if (!data.chat.selectedSession) {
+    // Huh
+    setTimeout(() => {
+      data.chat.selectedSession = session.callsign;
+    }, 100);
+  }
+  console.log(session.incoming?.action);
+  // await sendData(session, { action: "ok" });
+  if (session.direction === "incoming") {
     return;
   }
 
-  info(session, "New session. Fetching key...");
+  info(
+    session,
+    `New session. Fetching key from https://${session.callsign}/${session.callsign}.key ...`
+  );
   try {
-    const publicKeyString = await fetchKey(session.callsign);
-    if (publicKeyString) {
-      info(session, `Importing public key...`);
-      const publicKey = await importPublicKey(publicKeyString);
-      info(session, "Generating new secret...");
-      // const secretKey = await generateSecretKey();
-      // const secret = await exportSecretKey(secretKey);
-      info(session, `Encrypting secret with public key...`);
-      // const encrypted = await encrypt(
-      //   publicKey,
-      //   JSON.stringify({
-      //     from: data.home.callsign,
-      //     secret,
-      //   })
-      // );
-      info(session, `Sending secret...`);
-      // await sendData(currentSession(), { encrypted });
-      // session.key = secret;
+    const verifyKeyString = await fetchKey(session.callsign);
+    if (verifyKeyString) {
+      info(session, `Importing public sign key...`);
+      const verifyKey = await importPublicSignKey(verifyKeyString);
+      info(session, "Generating new derive key...");
+      const deriveKeys = await generateDeriveKeys();
+      info(session, "Exporting public derive key...");
+      const publicDeriveKey = await exportPublicKey(deriveKeys.publicKey);
+      info(session, "Sending public key...");
+      await sendData<MsgKey1>(session, {
+        action: "key1",
+        publicDeriveKey,
+      });
     } else {
       warning(session, "Key failed");
     }

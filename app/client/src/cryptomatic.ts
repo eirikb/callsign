@@ -1,6 +1,10 @@
 const secretKeyAlgorithm = "AES-GCM";
-const algorithm = {
+const signAlgorithm = {
   name: "ECDSA",
+  namedCurve: "P-384",
+};
+const deriveAlgorithm = {
+  name: "ECDH",
   namedCurve: "P-384",
 };
 
@@ -29,14 +33,7 @@ export async function fetchKey(callsign: string) {
 }
 
 export async function generateDeriveKeys() {
-  return window.crypto.subtle.generateKey(
-    {
-      name: "ECDH",
-      namedCurve: "P-384",
-    },
-    true,
-    ["deriveKey"]
-  );
+  return window.crypto.subtle.generateKey(deriveAlgorithm, true, ["deriveKey"]);
 }
 
 export async function exportPrivateKey(privateKey) {
@@ -49,9 +46,9 @@ export async function exportPublicKey(publicKey) {
   return arrayBufferToBase64(pubKOut);
 }
 
-export async function importPrivateKey(privateKey) {
+export async function importPrivateSignKey(privateKey) {
   const privK = base64ToArrayBuffer(privateKey);
-  return window.crypto.subtle.importKey("pkcs8", privK, algorithm, false, [
+  return window.crypto.subtle.importKey("pkcs8", privK, signAlgorithm, false, [
     "sign",
   ]);
 }
@@ -71,16 +68,26 @@ export async function derive(publicKey, privateKey) {
     ["encrypt", "decrypt"]
   );
 }
-
-export async function importPublicKey(publicKey) {
+async function importPublicKey(publicKey, usage: KeyUsage, algorithm: any) {
   const pubK = base64ToArrayBuffer(publicKey);
   return window.crypto.subtle.importKey("spki", pubK, algorithm, false, [
-    "verify",
+    usage,
   ]);
 }
 
+export async function importPublicDeriveKey(publicKey) {
+  return importPublicKey(publicKey, "deriveKey", deriveAlgorithm);
+}
+
+export async function importPublicSignKey(publicKey) {
+  return importPublicKey(publicKey, "verify", signAlgorithm);
+}
+
 export async function generateSignKeys() {
-  return window.crypto.subtle.generateKey(algorithm, true, ["sign", "verify"]);
+  return window.crypto.subtle.generateKey(signAlgorithm, true, [
+    "sign",
+    "verify",
+  ]);
 }
 
 export async function exportSecretKey(key) {
