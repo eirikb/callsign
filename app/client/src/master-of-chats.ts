@@ -1,5 +1,6 @@
 import { data, normalize, on, path } from "./dd";
 import {
+  decrypt,
   derive,
   exportPublicKey,
   exportSecretKey,
@@ -58,17 +59,7 @@ const warning = (loggable: Loggable, text: string, callsign?: string) =>
 const error = (loggable: Loggable, text: string, callsign?: string) =>
   log("error", loggable, text, callsign);
 
-function currentSession() {
-  return data.chat.sessions[normalize(data.chat.selectedSession)];
-}
-
-async function sendData<T>(session: Session, d: T) {
-  if (session.key) {
-    // const secret = await importSecretKey(session.key);
-    // const [iv, cipher] = await secretEncrypt(secret, JSON.stringify(d));
-    // d = { from: data.home.callsign, iv, cipher };
-  }
-
+export async function sendData<T>(session: Session, d: T) {
   session.outgoing = undefined;
   session.outgoing = d;
 }
@@ -120,7 +111,6 @@ on("!+*", path().chat.sessions.$.incoming, async (incomingRaw: any, { $ }) => {
     const verifyKey = pendingVerifyKey[callsign];
     info(chat, `Verifying signature with secret...`, callsign);
     if (await verify(verifyKey, incoming.signed, exportedSecret)) {
-      session.key = secret;
       success(chat, `Verified signature`, callsign);
       info(chat, `Importing sign key...`, callsign);
       const signKey = await importPrivateSignKey(data.home.key);
@@ -131,6 +121,7 @@ on("!+*", path().chat.sessions.$.incoming, async (incomingRaw: any, { $ }) => {
         action: "key3",
         signed,
       });
+      session.key = secret;
       success(chat, `Ready`, callsign);
     } else {
       error(chat, `Signature verification failed`, callsign);
@@ -150,14 +141,19 @@ on("!+*", path().chat.sessions.$.incoming, async (incomingRaw: any, { $ }) => {
     } else {
       error(chat, `Signature verification failed`, callsign);
     }
+  } else if (action === "message") {
+    const incoming = incomingRaw as MsgMessage;
+    const decrypted = await decrypt(session.key, incoming.iv, incoming.cipher);
+    session.lines.push({
+      text: decrypted,
+      type: "to",
+    });
   } else {
     warning(chat, `Unknown action: ${action}`, callsign);
   }
 });
 
 on("+", path().chat.sessions.$, async (session: Session) => {
-  console.log(session.incoming?.action);
-  // await sendData(session, { action: "ok" });
   if (session.direction === "incoming") {
     return;
   }
@@ -189,14 +185,3 @@ on("+", path().chat.sessions.$, async (session: Session) => {
     error(chat, `${e}`, callsign);
   }
 });
-
-async function send(e: Event) {
-  e.preventDefault();
-  const text = data.chat.text;
-  await sendData(currentSession(), { text });
-  currentSession().lines.push({
-    text,
-    type: "from",
-  });
-  data.chat.text = "";
-}

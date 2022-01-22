@@ -1,8 +1,7 @@
-type MessageType = "key" | "key2" | "key3" | "msg";
 type Store = "localStorage" | "sessionStorage" | "none";
 
 interface Message {
-  action: "key1" | "key2" | "key3";
+  action: "key1" | "key2" | "key3" | "message";
 }
 
 interface MsgKey1 extends Message {
@@ -18,8 +17,8 @@ interface MsgKey3 extends Message {
   signed: string;
 }
 
-interface MsgMsg extends Message {
-  text: string;
+interface MsgMessage extends Message {
+  cipher: string;
   iv: string;
 }
 

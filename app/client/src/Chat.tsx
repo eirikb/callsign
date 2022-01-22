@@ -1,21 +1,7 @@
-import { data, don, normalize, on, path, React, reset } from "./dd";
+import { data, don, normalize, path, React, reset } from "./dd";
 
-const log = (logLevel: LogLevel, session: Session, text: string) =>
-  session.lines.push({
-    text,
-    type: logLevel,
-  });
-
-const info = (session: Session, text: string) => log("info", session, text);
-const success = (session: Session, text: string) =>
-  log("success", session, text);
-const warning = (session: Session, text: string) =>
-  log("warning", session, text);
-const error = (session: Session, text: string) => log("error", session, text);
-
-function currentSession() {
-  return data.chat.sessions[normalize(data.chat.selectedSession)];
-}
+import { sendData } from "./master-of-chats";
+import { encrypt } from "./cryptomatic";
 
 function connect(e: Event) {
   e.preventDefault();
@@ -35,6 +21,18 @@ function connect(e: Event) {
 function logout() {
   localStorage.clear();
   reset();
+}
+
+async function send(e: Event, session: Session) {
+  e.preventDefault();
+  const text = data.chat.text;
+  const [iv, cipher] = await encrypt(session.key, text);
+  await sendData<MsgMessage>(session, { action: "message", iv, cipher });
+  session.lines.push({
+    text,
+    type: "from",
+  });
+  data.chat.text = "";
 }
 
 function LogLine({ m }: { m: Line }) {
@@ -131,7 +129,7 @@ function CurrentSession() {
         </div>
         <form
           class="flex flex-row items-center h-16 rounded-xl bg-white w-full px-4"
-          onsubmit={() => console.log("send?!")}
+          onsubmit={(e) => send(e, session)}
         >
           <div class="flex-grow ml-4">
             <div class="relative w-full">
@@ -201,8 +199,8 @@ export const Chat = () => (
         </form>
         <div class="flex flex-col mt-8">
           <div class="flex flex-col space-y-1 mt-4 -mx-2 h-48 overflow-y-auto">
-            {don(path().chat.sessions.$)
-              .filter((s) => s.key)
+            {don(path().chat.sessions.$.$x)
+              .filter((s) => !!s.key)
               .map((s) => (
                 <button
                   class="flex flex-row items-center hover:bg-gray-100 rounded-xl p-2"
