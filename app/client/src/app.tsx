@@ -15,6 +15,8 @@ import { CreateKeys } from "./CreateKey";
 import "./transport";
 import { UploadKey } from "./UploadKeys";
 
+import "./master-of-chats";
+
 const domainifyis = (url: string): string =>
   (url || "").toLowerCase().replace(" ", "");
 

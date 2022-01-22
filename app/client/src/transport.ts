@@ -4,7 +4,7 @@ import { data, normalize, on, path } from "./dd";
 import { queryTypes } from "../../server-relay/types";
 import {
   decrypt,
-  importPrivateKey,
+  // importPrivateKey,
   // importSecretKey,
   // secretDecrypt,
 } from "./cryptomatic";
@@ -72,7 +72,7 @@ function connect() {
     console.log(">", val);
 
     if (val.encrypted) {
-      const privateKey = await importPrivateKey(data.home.key);
+      // const privateKey = await importPrivateKey(data.home.key);
       // const decrypted = await decrypt(privateKey, val.encrypted);
       // const d = JSON.parse(decrypted);
       // if (d.from && d.secret) {

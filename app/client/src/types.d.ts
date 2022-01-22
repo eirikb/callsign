@@ -54,6 +54,7 @@ interface Chat {
   selectedSession: string;
   text: string;
   menuOpen: boolean;
+  log: string[];
 }
 
 interface CreateKey {

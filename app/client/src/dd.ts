@@ -20,6 +20,7 @@ const initial: Data = {
     selectedSession: "",
     text: "",
     menuOpen: false,
+    log: [],
   },
   createKey: {
     publicKey: "",
