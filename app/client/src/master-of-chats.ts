@@ -123,6 +123,10 @@ on("!+*", path().chat.sessions.$.incoming, async (incomingRaw: any, { $ }) => {
       });
       session.key = secret;
       success(chat, `Ready`, callsign);
+      session.lines.push({
+        text: "Secure channel established!",
+        type: "success",
+      });
     } else {
       error(chat, `Signature verification failed`, callsign);
     }
@@ -138,6 +142,10 @@ on("!+*", path().chat.sessions.$.incoming, async (incomingRaw: any, { $ }) => {
     if (await verify(verifyKey, incoming.signed, exportedSecret)) {
       success(chat, `Verified signature`, callsign);
       session.key = secret;
+      session.lines.push({
+        text: "Secure channel established!",
+        type: "success",
+      });
     } else {
       error(chat, `Signature verification failed`, callsign);
     }

@@ -90,7 +90,11 @@ function ChatLines({ session }: { session: Session }) {
         );
 
       default:
-        return <LogLine m={m} />;
+        return (
+          <div class="col-start-1 col-end-10 rounded-lg">
+            <LogLine m={m} />
+          </div>
+        );
     }
   });
 }
