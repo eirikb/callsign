@@ -39,8 +39,8 @@ function logout() {
 
 function LogLine({ m }: { m: Line }) {
   return (
-    <div class="col-start-1 col-end-8 rounded-lg">
-      <div class="flex items-center justify-start flex-row-reverse">
+    <div class="col-start-1 rounded-lg">
+      <div class="flex">
         <div
           class={
             m.type === "error"
@@ -95,7 +95,6 @@ function ChatLines({ session }: { session: Session }) {
         return <LogLine m={m} />;
     }
   });
-  // });
 }
 
 function Logs() {
@@ -105,10 +104,8 @@ function Logs() {
         <div class="flex flex-col-reverse overflow-y-scroll h-full">
           <div class="grid grid-cols-12 gap-y-2">
             {don(path().chat.lines.$).map((line) => (
-              <div class="col-start-1 col-end-8 rounded-lg">
-                <div class="flex items-center justify-start flex-row-reverse">
-                  <LogLine m={line} />
-                </div>
+              <div class="col-start-1 col-end-10 rounded-lg">
+                <LogLine m={line} />
               </div>
             ))}
           </div>
@@ -204,17 +201,19 @@ export const Chat = () => (
         </form>
         <div class="flex flex-col mt-8">
           <div class="flex flex-col space-y-1 mt-4 -mx-2 h-48 overflow-y-auto">
-            {don(path().chat.sessions.$).map((s) => (
-              <button
-                class="flex flex-row items-center hover:bg-gray-100 rounded-xl p-2"
-                onclick={() => (data.chat.selectedSession = s.callsign)}
-              >
-                <div class="flex items-center justify-center h-8 w-8 bg-indigo-200 rounded-full">
-                  {s.callsign.slice(0, 1)}
-                </div>
-                <div class="ml-2 text-sm font-semibold">{s.callsign}</div>
-              </button>
-            ))}
+            {don(path().chat.sessions.$)
+              .filter((s) => s.key)
+              .map((s) => (
+                <button
+                  class="flex flex-row items-center hover:bg-gray-100 rounded-xl p-2"
+                  onclick={() => (data.chat.selectedSession = s.callsign)}
+                >
+                  <div class="flex items-center justify-center h-8 w-8 bg-indigo-200 rounded-full">
+                    {s.callsign.slice(0, 1)}
+                  </div>
+                  <div class="ml-2 text-sm font-semibold">{s.callsign}</div>
+                </button>
+              ))}
           </div>
         </div>
       </div>
