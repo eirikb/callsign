@@ -25,18 +25,19 @@ setTimeout(() => {
   }
 }, 2000);
 
-const log = (logLevel: LogLevel, session: Session, text: string) =>
-  session.lines.push({
+const log = (logLevel: LogLevel, loggable: Loggable, text: string) =>
+  loggable.lines.push({
     text,
     type: logLevel,
   });
 
-const info = (session: Session, text: string) => log("info", session, text);
-const success = (session: Session, text: string) =>
-  log("success", session, text);
-const warning = (session: Session, text: string) =>
-  log("warning", session, text);
-const error = (session: Session, text: string) => log("error", session, text);
+const info = (loggable: Loggable, text: string) => log("info", loggable, text);
+const success = (loggable: Loggable, text: string) =>
+  log("success", loggable, text);
+const warning = (loggable: Loggable, text: string) =>
+  log("warning", loggable, text);
+const error = (loggable: Loggable, text: string) =>
+  log("error", loggable, text);
 
 function currentSession() {
   return data.chat.sessions[normalize(data.chat.selectedSession)];
@@ -54,10 +55,10 @@ async function sendData<T>(session: Session, d: T) {
 }
 
 on("!+*", path().chat.sessions.$.incoming, async (incomingRaw: any, { $ }) => {
-  const session = data.chat.sessions[$];
+  // const session = data.chat.sessions[$];
   const action = incomingRaw.action;
   if (action === "key1") {
-    info(session, `Incoming session.`);
+    info(data.chat, `Incoming session.`);
     const incoming = incomingRaw as MsgKey1;
     info(session, `Importing public derive key...`);
     const publicDeriveKey = await importPublicDeriveKey(

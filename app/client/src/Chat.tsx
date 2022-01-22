@@ -37,6 +37,126 @@ function logout() {
   reset();
 }
 
+function LogLine({ m }: { m: Line }) {
+  return (
+    <div class="col-start-1 col-end-8 rounded-lg">
+      <div class="flex items-center justify-start flex-row-reverse">
+        <div
+          class={
+            m.type === "error"
+              ? "text-red-500"
+              : m.type === "info"
+              ? "text-blue-500"
+              : m.type === "success"
+              ? "text-green-500"
+              : m.type === "warning"
+              ? "text-yellow-500"
+              : "text-gray-500"
+          }
+        >
+          {m.text}
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function ChatLines({ session }: { session: Session }) {
+  return don(path(session).lines.$).map((m) => {
+    switch (m.type) {
+      case "from":
+        return (
+          <div class="col-start-1 col-end-8 p-3 rounded-lg">
+            <div class="flex flex-row items-center">
+              <div class="flex items-center justify-center h-10 w-10 rounded-full bg-indigo-500 flex-shrink-0">
+                {data.home.callsign.slice(0, 1)}
+              </div>
+              <div class="relative ml-3 text-sm bg-white py-2 px-4 shadow rounded-xl">
+                <div>{m.text}</div>
+              </div>
+            </div>
+          </div>
+        );
+      case "to":
+        return (
+          <div class="col-start-6 col-end-13 p-3 rounded-lg">
+            <div class="flex items-center justify-start flex-row-reverse">
+              <div class="flex items-center justify-center h-10 w-10 rounded-full bg-indigo-500 flex-shrink-0">
+                {session.callsign.slice(0, 1)}
+              </div>
+              <div class="relative mr-3 text-sm bg-indigo-100 py-2 px-4 shadow rounded-xl">
+                <div>{m.text}</div>
+              </div>
+            </div>
+          </div>
+        );
+
+      default:
+        return <LogLine m={m} />;
+    }
+  });
+  // });
+}
+
+function Logs() {
+  return (
+    <div class="flex flex-col flex-auto flex-shrink-0 rounded-2xl bg-gray-100 h-full p-4">
+      <div class="flex flex-col h-full overflow-x-auto mb-4">
+        <div class="flex flex-col-reverse overflow-y-scroll h-full">
+          <div class="grid grid-cols-12 gap-y-2">
+            {don(path().chat.lines.$).map((line) => (
+              <div class="col-start-1 col-end-8 rounded-lg">
+                <div class="flex items-center justify-start flex-row-reverse">
+                  <LogLine m={line} />
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function CurrentSession() {
+  return don(path().chat.selectedSession).map((s) => {
+    const session = data.chat.sessions[normalize(s)];
+    if (!session) return <Logs />;
+
+    return (
+      <div class="flex flex-col flex-auto flex-shrink-0 rounded-2xl bg-gray-100 h-full p-4">
+        <div class="flex flex-col h-full overflow-x-auto mb-4">
+          <div class="flex flex-col-reverse overflow-y-scroll h-full">
+            <div class="grid grid-cols-12 gap-y-2">
+              <ChatLines session={session} />
+            </div>
+          </div>
+        </div>
+        <form
+          class="flex flex-row items-center h-16 rounded-xl bg-white w-full px-4"
+          onsubmit={() => console.log("send?!")}
+        >
+          <div class="flex-grow ml-4">
+            <div class="relative w-full">
+              <input
+                bind={path().chat.text.$path}
+                type="text"
+                class="flex w-full border rounded-xl focus:outline-none focus:border-indigo-300 pl-4 h-10"
+                placeholder="Type a message..."
+              />
+            </div>
+          </div>
+          <div class="ml-4">
+            <button class="flex items-center justify-center bg-indigo-500 hover:bg-indigo-600 rounded-xl text-white px-4 py-1 flex-shrink-0">
+              Send
+            </button>
+          </div>
+        </form>
+      </div>
+    );
+  });
+}
+
 export const Chat = () => (
   <div class="flex h-screen text-gray-800">
     <div class="w-12 flex flex-row h-full w-full overflow-x-hidden">
@@ -99,92 +219,7 @@ export const Chat = () => (
         </div>
       </div>
       <div class="flex flex-col flex-auto h-full p-6">
-        <div class="flex flex-col flex-auto flex-shrink-0 rounded-2xl bg-gray-100 h-full p-4">
-          <div class="flex flex-col h-full overflow-x-auto mb-4">
-            <div class="flex flex-col-reverse overflow-y-scroll h-full">
-              <div class="grid grid-cols-12 gap-y-2">
-                {don(path().chat.selectedSession).map((s) => {
-                  const session = data.chat.sessions[normalize(s)];
-                  if (!session) return "";
-
-                  return don(path(session).lines.$).map((m) => {
-                    switch (m.type) {
-                      case "from":
-                        return (
-                          <div class="col-start-1 col-end-8 p-3 rounded-lg">
-                            <div class="flex flex-row items-center">
-                              <div class="flex items-center justify-center h-10 w-10 rounded-full bg-indigo-500 flex-shrink-0">
-                                {data.home.callsign.slice(0, 1)}
-                              </div>
-                              <div class="relative ml-3 text-sm bg-white py-2 px-4 shadow rounded-xl">
-                                <div>{m.text}</div>
-                              </div>
-                            </div>
-                          </div>
-                        );
-                      case "to":
-                        return (
-                          <div class="col-start-6 col-end-13 p-3 rounded-lg">
-                            <div class="flex items-center justify-start flex-row-reverse">
-                              <div class="flex items-center justify-center h-10 w-10 rounded-full bg-indigo-500 flex-shrink-0">
-                                {s.slice(0, 1)}
-                              </div>
-                              <div class="relative mr-3 text-sm bg-indigo-100 py-2 px-4 shadow rounded-xl">
-                                <div>{m.text}</div>
-                              </div>
-                            </div>
-                          </div>
-                        );
-
-                      default:
-                        return (
-                          <div class="col-start-1 col-end-8 rounded-lg">
-                            <div class="flex items-center justify-start flex-row-reverse">
-                              <div
-                                class={
-                                  m.type === "error"
-                                    ? "text-red-500"
-                                    : m.type === "info"
-                                    ? "text-blue-500"
-                                    : m.type === "success"
-                                    ? "text-green-500"
-                                    : m.type === "warning"
-                                    ? "text-yellow-500"
-                                    : "text-gray-500"
-                                }
-                              >
-                                {m.text}
-                              </div>
-                            </div>
-                          </div>
-                        );
-                    }
-                  });
-                })}
-              </div>
-            </div>
-          </div>
-          <form
-            class="flex flex-row items-center h-16 rounded-xl bg-white w-full px-4"
-            onsubmit={() => console.log("send?!")}
-          >
-            <div class="flex-grow ml-4">
-              <div class="relative w-full">
-                <input
-                  bind={path().chat.text.$path}
-                  type="text"
-                  class="flex w-full border rounded-xl focus:outline-none focus:border-indigo-300 pl-4 h-10"
-                  placeholder="Type a message..."
-                />
-              </div>
-            </div>
-            <div class="ml-4">
-              <button class="flex items-center justify-center bg-indigo-500 hover:bg-indigo-600 rounded-xl text-white px-4 py-1 flex-shrink-0">
-                Send
-              </button>
-            </div>
-          </form>
-        </div>
+        <CurrentSession />
       </div>
     </div>
   </div>

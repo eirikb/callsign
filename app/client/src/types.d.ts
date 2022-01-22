@@ -39,22 +39,29 @@ interface Line {
   text: string;
 }
 
-interface Session {
+interface LogLine {
+  level: LogLevel;
+  text: string;
+}
+
+interface Loggable {
+  lines: Line[];
+}
+
+interface Session extends Loggable {
   callsign: string;
   direction: "outgoing" | "incoming";
-  lines: Line[];
   outgoing: MsgMsg | MsgKey | MsgKey2 | MsgKey3 | undefined;
   incoming: MsgMsg | MsgKey | MsgKey2 | MsgKey3 | undefined;
   key?: stirng;
 }
 
-interface Chat {
+interface Chat extends Loggable {
   callsignToConnectTo: string;
   sessions: { [callsign: string]: Session };
   selectedSession: string;
   text: string;
   menuOpen: boolean;
-  log: string[];
 }
 
 interface CreateKey {
