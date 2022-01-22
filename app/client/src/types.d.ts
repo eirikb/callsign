@@ -15,7 +15,7 @@ interface MsgKey2 extends Message {
 }
 
 interface MsgKey3 extends Message {
-  sign: string;
+  signed: string;
 }
 
 interface MsgMsg extends Message {

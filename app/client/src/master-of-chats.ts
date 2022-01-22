@@ -1,4 +1,4 @@
-import { data, don, normalize, on, path, React, reset } from "./dd";
+import { data, normalize, on, path } from "./dd";
 import {
   derive,
   exportPublicKey,
@@ -9,7 +9,12 @@ import {
   importPublicDeriveKey,
   importPublicSignKey,
   sign,
+  verify,
 } from "./cryptomatic";
+
+const privateDeriveKeys: { [callsign: string]: CryptoKey } = {};
+const pendingSecret: { [callsign: string]: CryptoKey } = {};
+const pendingVerifyKey: { [callsign: string]: CryptoKey } = {};
 
 // TODO:
 setTimeout(() => {
@@ -34,7 +39,12 @@ const log = (
   // Huh
   setTimeout(() =>
     loggable.lines.push({
-      text: callsign ? `[${callsign}] ${text}` : text,
+      text: callsign
+        ? `[${new Date()
+            .toISOString()
+            .replace(/....Z/, "")
+            .replace(/T/, " ")} ${callsign}] ${text}`
+        : text,
       type: logLevel,
     })
   );
@@ -89,6 +99,7 @@ on("!+*", path().chat.sessions.$.incoming, async (incomingRaw: any, { $ }) => {
     const myPublicDeriveKey = await exportPublicKey(deriveKeys.publicKey);
 
     info(chat, "Sending public derive key + signed...", callsign);
+    pendingSecret[session.callsign] = secret;
     await sendData<MsgKey2>(session, {
       action: "key2",
       publicDeriveKey: myPublicDeriveKey,
@@ -100,6 +111,47 @@ on("!+*", path().chat.sessions.$.incoming, async (incomingRaw: any, { $ }) => {
     const publicDeriveKey = await importPublicDeriveKey(
       incoming.publicDeriveKey
     );
+
+    info(chat, `Creating new secret...`, callsign);
+    const privateDeriveKey = privateDeriveKeys[callsign];
+    const secret = await derive(publicDeriveKey, privateDeriveKey);
+    info(chat, "Exporting secret...", callsign);
+    const exportedSecret = await exportSecretKey(secret);
+    const verifyKey = pendingVerifyKey[callsign];
+    info(chat, `Verifying signature with secret...`, callsign);
+    if (await verify(verifyKey, incoming.signed, exportedSecret)) {
+      session.key = secret;
+      success(chat, `Verified signature`, callsign);
+      info(chat, `Importing sign key...`, callsign);
+      const signKey = await importPrivateSignKey(data.home.key);
+      info(chat, `Signing secret...`, callsign);
+      const signed = await sign(signKey, exportedSecret);
+      info(chat, `Sending signature...`, callsign);
+      await sendData<MsgKey3>(session, {
+        action: "key3",
+        signed,
+      });
+      success(chat, `Ready`, callsign);
+    } else {
+      error(chat, `Signature verification failed`, callsign);
+    }
+  } else if (action === "key3") {
+    const incoming = incomingRaw as MsgKey3;
+    info(chat, `Importing public verify key...`, callsign);
+    const verifyKeyString = await fetchKey(session.callsign);
+    info(chat, `Importing public verify key...`, callsign);
+    const verifyKey = await importPublicSignKey(verifyKeyString);
+    const secret = pendingSecret[session.callsign];
+    info(chat, `Exporting secret key...`, callsign);
+    const exportedSecret = await exportSecretKey(secret);
+    if (await verify(verifyKey, incoming.signed, exportedSecret)) {
+      success(chat, `Verified signature`, callsign);
+      session.key = secret;
+    } else {
+      error(chat, `Signature verification failed`, callsign);
+    }
+  } else {
+    warning(chat, `Unknown action: ${action}`, callsign);
   }
 });
 
@@ -116,13 +168,16 @@ on("+", path().chat.sessions.$, async (session: Session) => {
   try {
     const verifyKeyString = await fetchKey(session.callsign);
     if (verifyKeyString) {
-      info(chat, `Importing public sign key...`, callsign);
-      const verifyKey = await importPublicSignKey(verifyKeyString);
+      info(chat, `Importing public verify key...`, callsign);
+      pendingVerifyKey[callsign] = await importPublicSignKey(verifyKeyString);
       info(chat, "Generating new derive key...", callsign);
       const deriveKeys = await generateDeriveKeys();
       info(chat, "Exporting public derive key...", callsign);
       const publicDeriveKey = await exportPublicKey(deriveKeys.publicKey);
-      info(chat, "Sending public key...", callsign);
+      info(chat, "Sending public derive key...", callsign);
+      if (deriveKeys.privateKey) {
+        privateDeriveKeys[session.callsign] = deriveKeys.privateKey;
+      }
       await sendData<MsgKey1>(session, {
         action: "key1",
         publicDeriveKey,
