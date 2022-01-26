@@ -124,7 +124,7 @@ function CurrentSession() {
 
     return (
       <div class="flex flex-col flex-auto flex-shrink-0 rounded-2xl bg-gray-100 p-4">
-        <div class="flex flex-col overflow-x-auto mb-4">
+        <div class="flex h-full flex-col overflow-x-auto mb-4">
           <div class="flex flex-col-reverse overflow-y-scroll h-full">
             <div class="grid grid-cols-12 gap-y-2">
               <ChatLines session={session} />
