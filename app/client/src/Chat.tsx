@@ -101,9 +101,9 @@ function ChatLines({ session }: { session: Session }) {
 
 function Logs() {
   return (
-    <div class="flex flex-col flex-auto flex-shrink-0 rounded-2xl bg-gray-100 h-full p-4">
-      <div class="flex flex-col h-full overflow-x-auto mb-4">
-        <div class="flex flex-col-reverse overflow-y-scroll h-full">
+    <div class="flex flex-col flex-auto flex-shrink-0 rounded-2xl bg-gray-100 p-4 h-full">
+      <div class="flex h-full flex-col overflow-x-auto mb-4">
+        <div class="flex h-full flex-col-reverse overflow-y-scroll">
           <div class="grid grid-cols-12 gap-y-2">
             {don(path().chat.lines.$).map((line) => (
               <div class="col-start-1 col-end-10 rounded-lg">
@@ -123,8 +123,8 @@ function CurrentSession() {
     if (!session) return <Logs />;
 
     return (
-      <div class="flex flex-col flex-auto flex-shrink-0 rounded-2xl bg-gray-100 h-full p-4">
-        <div class="flex flex-col h-full overflow-x-auto mb-4">
+      <div class="flex flex-col flex-auto flex-shrink-0 rounded-2xl bg-gray-100 p-4">
+        <div class="flex flex-col overflow-x-auto mb-4">
           <div class="flex flex-col-reverse overflow-y-scroll h-full">
             <div class="grid grid-cols-12 gap-y-2">
               <ChatLines session={session} />
@@ -157,26 +157,42 @@ function CurrentSession() {
 }
 
 export const Chat = () => (
-  <div class="flex h-screen text-gray-800">
-    <div class="w-12 flex flex-row h-full w-full overflow-x-hidden">
+  <div class="h-screen flex text-gray-800 flex-col">
+    <div class="w-full h-12 bg-white p-5 md:hidden">
+      {don(path().chat.menuOpen).map((open) =>
+        !open ? (
+          <div
+            class="mb-6 ml-1"
+            onClick={() => (data.chat.menuOpen = !data.chat.menuOpen)}
+          >
+            <svg
+              width="24"
+              height="24"
+              stroke-width="1.5"
+              viewBox="0 0 24 24"
+              fill="none"
+              xmlns="http://www.w3.org/2000/svg"
+            >
+              <path
+                d="M18.5 12H6M6 12L12 6M6 12L12 18"
+                stroke="currentColor"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+              />
+            </svg>
+          </div>
+        ) : null
+      )}
+    </div>
+    <div class="flex h-full w-full overflow-x-hidden">
       <div
         class={don(path().chat.menuOpen).map(
           (open) =>
-            `flex flex-col py-8 md:pl-6 sm:pl-0 pr-2 w-12 md:w-64 bg-white overflow-hidden flex-shrink-0 ${
-              open ? "w-64" : ""
+            `flex h-full md:flex flex-col w-full py-8 md:pl-6 sm:pl-0 pr-2 w-0 md:w-64 bg-white overflow-hidden flex-shrink-0 ${
+              open ? "" : "hidden"
             }`
         )}
       >
-        <div
-          class="md:hidden mb-6 ml-1"
-          onClick={() => (data.chat.menuOpen = !data.chat.menuOpen)}
-        >
-          <svg viewBox="0 0 100 80" width="40" height="40">
-            <rect width="100" height="20" />
-            <rect y="30" width="100" height="20" />
-            <rect y="60" width="100" height="20" />
-          </svg>
-        </div>
         <div class="flex flex-row items-center justify-center h-12 w-full">
           <div class="ml-2 font-bold text-xl">
             {don(path().home.callsign)}
@@ -203,23 +219,47 @@ export const Chat = () => (
         </form>
         <div class="flex flex-col mt-8">
           <div class="flex flex-col space-y-1 mt-4 -mx-2 h-48 overflow-y-auto">
+            <button
+              class={don(path().chat.selectedSession).map(
+                (s) =>
+                  `flex flex-row items-center hover:bg-gray-100 rounded-xl p-2 ${
+                    s ? "" : "bg-gray-100"
+                  }`
+              )}
+              onclick={() => {
+                data.chat.selectedSession = "";
+                data.chat.menuOpen = false;
+              }}
+            >
+              <div class="ml-2 text-sm font-semibold">Info</div>
+            </button>
             {don(path().chat.sessions.$.$x)
               .filter((s) => !!s.key)
-              .map((s) => (
-                <button
-                  class="flex flex-row items-center hover:bg-gray-100 rounded-xl p-2"
-                  onclick={() => (data.chat.selectedSession = s.callsign)}
-                >
-                  <div class="flex items-center justify-center h-8 w-8 bg-indigo-200 rounded-full">
-                    {s.callsign.slice(0, 1)}
-                  </div>
-                  <div class="ml-2 text-sm font-semibold">{s.callsign}</div>
-                </button>
-              ))}
+              .mapOn(path().chat.selectedSession.$path, (_, { $ }) => {
+                const s = data.chat.sessions[$];
+                return (
+                  <button
+                    class={`flex flex-row items-center hover:bg-gray-100 rounded-xl p-2 ${
+                      s.callsign === data.chat.selectedSession
+                        ? "bg-gray-100"
+                        : ""
+                    }`}
+                    onclick={() => {
+                      data.chat.selectedSession = s.callsign;
+                      data.chat.menuOpen = false;
+                    }}
+                  >
+                    <div class="flex items-center justify-center h-8 w-8 bg-indigo-200 rounded-full">
+                      {s.callsign?.slice(0, 1)}
+                    </div>
+                    <div class="ml-2 text-sm font-semibold">{s.callsign}</div>
+                  </button>
+                );
+              })}
           </div>
         </div>
       </div>
-      <div class="flex flex-col flex-auto h-full p-6">
+      <div class="flex flex-col flex-auto p-6">
         <CurrentSession />
       </div>
     </div>
