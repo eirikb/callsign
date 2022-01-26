@@ -20,7 +20,12 @@ const initial: Data = {
     selectedSession: "",
     text: "",
     menuOpen: false,
-    lines: [],
+    lines: [
+      {
+        type: "info",
+        text: "Welcome to Callsign!",
+      },
+    ],
   },
   createKey: {
     publicKey: "",

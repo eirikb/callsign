@@ -8,6 +8,7 @@ function connect(e: Event) {
 
   const callsign = data.chat.callsignToConnectTo;
   data.chat.sessions[normalize(callsign)] = {
+    active: false,
     lines: [],
     direction: "outgoing",
     callsign,
@@ -16,6 +17,8 @@ function connect(e: Event) {
   };
 
   data.chat.callsignToConnectTo = "";
+  data.chat.selectedSession = "";
+  data.chat.menuOpen = false;
 }
 
 function logout() {
@@ -162,7 +165,7 @@ export const Chat = () => (
       {don(path().chat.menuOpen).map((open) =>
         !open ? (
           <div
-            class="mb-6 ml-1"
+            class="mb-6 ml-1 flex flex-row"
             onClick={() => (data.chat.menuOpen = !data.chat.menuOpen)}
           >
             <svg
@@ -180,6 +183,9 @@ export const Chat = () => (
                 stroke-linejoin="round"
               />
             </svg>
+            <b class="ml-5">
+              {don(path().chat.selectedSession).map((n) => n || "Info")}
+            </b>
           </div>
         ) : null
       )}
@@ -233,29 +239,31 @@ export const Chat = () => (
             >
               <div class="ml-2 text-sm font-semibold">Info</div>
             </button>
-            {don(path().chat.sessions.$.$x)
-              .filter((s) => !!s.key)
-              .mapOn(path().chat.selectedSession.$path, (_, { $ }) => {
-                const s = data.chat.sessions[$];
-                return (
-                  <button
-                    class={`flex flex-row items-center hover:bg-gray-100 rounded-xl p-2 ${
-                      s.callsign === data.chat.selectedSession
-                        ? "bg-gray-100"
-                        : ""
-                    }`}
-                    onclick={() => {
-                      data.chat.selectedSession = s.callsign;
-                      data.chat.menuOpen = false;
-                    }}
-                  >
-                    <div class="flex items-center justify-center h-8 w-8 bg-indigo-200 rounded-full">
-                      {s.callsign?.slice(0, 1)}
-                    </div>
-                    <div class="ml-2 text-sm font-semibold">{s.callsign}</div>
-                  </button>
-                );
-              })}
+            {don(path().chat.sessions.$).map((s) => (
+              <button
+                class={don(path().chat.selectedSession).map(
+                  (ss) =>
+                    `flex flex-row items-center hover:bg-gray-100 rounded-xl p-2 ${
+                      s.callsign === ss ? "bg-gray-100" : ""
+                    }`
+                )}
+                onclick={() => {
+                  data.chat.selectedSession = s.callsign;
+                  data.chat.menuOpen = false;
+                  s.active = false;
+                }}
+              >
+                {don(path(s).active).map((active) =>
+                  active ? (
+                    <span class="inline-block w-2 h-2 mr-2 bg-red-600 rounded-full" />
+                  ) : null
+                )}
+                <div class="flex items-center justify-center h-8 w-8 bg-indigo-200 rounded-full">
+                  {s.callsign?.slice(0, 1)}
+                </div>
+                <div class="ml-2 text-sm font-semibold">{s.callsign}</div>
+              </button>
+            ))}
           </div>
         </div>
       </div>

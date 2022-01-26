@@ -52,6 +52,7 @@ interface Session extends Loggable {
   direction: "outgoing" | "incoming";
   outgoing: MsgMsg | MsgKey | MsgKey2 | MsgKey3 | undefined;
   incoming: MsgMsg | MsgKey | MsgKey2 | MsgKey3 | undefined;
+  active: boolean;
   key?: stirng;
 }
 

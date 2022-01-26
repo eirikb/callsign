@@ -18,18 +18,19 @@ const pendingSecret: { [callsign: string]: CryptoKey } = {};
 const pendingVerifyKey: { [callsign: string]: CryptoKey } = {};
 
 // TODO:
-setTimeout(() => {
-  if (data.home.callsign === "a.callsign.network") {
-    data.chat.sessions[normalize("b.callsign.network")] = {
-      callsign: "b.callsign.network",
-      direction: "outgoing",
-      incoming: undefined,
-      key: undefined,
-      lines: [],
-      outgoing: undefined,
-    };
-  }
-}, 2000);
+// setTimeout(() => {
+//   if (data.home.callsign === "a.callsign.network") {
+//     data.chat.sessions[normalize("b.callsign.network")] = {
+//       active: false,
+//       callsign: "b.callsign.network",
+//       direction: "outgoing",
+//       incoming: undefined,
+//       key: undefined,
+//       lines: [],
+//       outgoing: undefined,
+//     };
+//   }
+// }, 2000);
 
 const log = (
   logLevel: LogLevel,
@@ -127,6 +128,9 @@ on("!+*", path().chat.sessions.$.incoming, async (incomingRaw: any, { $ }) => {
         text: "Secure channel established!",
         type: "success",
       });
+      if (data.chat.selectedSession === "") {
+        data.chat.selectedSession = session.callsign;
+      }
     } else {
       error(chat, `Signature verification failed`, callsign);
     }
@@ -146,6 +150,7 @@ on("!+*", path().chat.sessions.$.incoming, async (incomingRaw: any, { $ }) => {
         text: "Secure channel established!",
         type: "success",
       });
+      session.active = data.chat.selectedSession !== session.callsign;
     } else {
       error(chat, `Signature verification failed`, callsign);
     }
@@ -156,6 +161,8 @@ on("!+*", path().chat.sessions.$.incoming, async (incomingRaw: any, { $ }) => {
       text: decrypted,
       type: "to",
     });
+    session.active =
+      data.chat.selectedSession !== session.callsign || data.chat.menuOpen;
   } else {
     warning(chat, `Unknown action: ${action}`, callsign);
   }
