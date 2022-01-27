@@ -74,6 +74,7 @@ function connect() {
     } else {
       data.chat.sessions[normalize(val.fromCallsign)] = {
         callsign: val.fromCallsign,
+        active: false,
         lines: [],
         direction: "incoming",
         outgoing: undefined,

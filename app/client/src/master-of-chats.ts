@@ -163,6 +163,9 @@ on("!+*", path().chat.sessions.$.incoming, async (incomingRaw: any, { $ }) => {
     });
     session.active =
       data.chat.selectedSession !== session.callsign || data.chat.menuOpen;
+    if (document.hidden) {
+      document.title = `Callsign - ${Date.now()}`;
+    }
   } else {
     warning(chat, `Unknown action: ${action}`, callsign);
   }
