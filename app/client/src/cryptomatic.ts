@@ -29,7 +29,9 @@ function base64ToArrayBuffer(base64: string) {
 }
 
 export async function fetchKey(callsign: string) {
-  return fetch(`https://${callsign}/${callsign}.key`).then((r) => r.text());
+  return fetch(
+    `https://${callsign}/${callsign}.key?inyourfacecache=${Date.now()}`
+  ).then((r) => r.text());
 }
 
 export async function generateDeriveKeys() {
