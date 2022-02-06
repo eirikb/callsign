@@ -12,22 +12,22 @@ import {
   sign,
   verify,
 } from "./cryptomatic";
+import { sendData } from "./transport";
 
 const privateDeriveKeys: { [callsign: string]: CryptoKey } = {};
-const pendingSecret: { [callsign: string]: CryptoKey } = {};
+const pendingSecret: { [sessionId: string]: CryptoKey } = {};
 const pendingVerifyKey: { [callsign: string]: CryptoKey } = {};
 
-// TODO:
+// // TODO:
 // setTimeout(() => {
-//   if (data.home.callsign === "a.callsign.network") {
-//     data.chat.sessions[normalize("b.callsign.network")] = {
+//   if (data.home.callsign === "b.callsign.network") {
+//     data.chat.sessions[normalize("a.callsign.network")] = {
 //       active: false,
-//       callsign: "b.callsign.network",
+//       callsign: "a.callsign.network",
 //       direction: "outgoing",
 //       incoming: undefined,
-//       key: undefined,
 //       lines: [],
-//       outgoing: undefined,
+//       sessionIdKeys: {},
 //     };
 //   }
 // }, 2000);
@@ -60,69 +60,75 @@ const warning = (loggable: Loggable, text: string, callsign?: string) =>
 const error = (loggable: Loggable, text: string, callsign?: string) =>
   log("error", loggable, text, callsign);
 
-export async function sendData<T>(session: Session, d: T) {
-  session.outgoing = undefined;
-  session.outgoing = d;
-}
-
 on("!+*", path().chat.sessions.$.incoming, async (incomingRaw: any, { $ }) => {
   const session = data.chat.sessions[$];
   const callsign = session.callsign;
   const chat = data.chat;
   const action = incomingRaw.action;
+  const sessionId = incomingRaw.from.sessionId;
+
   if (action === "key1") {
-    info(chat, `New incoming session.`, callsign);
+    info(chat, `New incoming session`, sessionId);
     const incoming = incomingRaw as MsgKey1;
-    info(chat, `Importing public derive key...`, callsign);
+    info(chat, `Importing public derive key...`, sessionId);
     const publicDeriveKey = await importPublicDeriveKey(
       incoming.publicDeriveKey
     );
-    info(chat, `Generating new derive key...`, callsign);
+    info(chat, `Generating new derive key...`, sessionId);
     const deriveKeys = await generateDeriveKeys();
-    info(chat, `Creating new secret...`, callsign);
+    info(chat, `Creating new secret...`, sessionId);
     const secret = await derive(publicDeriveKey, deriveKeys.privateKey);
-    info(chat, "Exporting secret...", callsign);
+    info(chat, "Exporting secret...", sessionId);
     const exportedSecret = await exportSecretKey(secret);
-    info(chat, `Importing sign key...`, callsign);
+    info(chat, `Importing sign key...`, sessionId);
     const signKey = await importPrivateSignKey(data.home.key);
-    info(chat, `Signing secret...`, callsign);
+    info(chat, `Signing secret...`, sessionId);
     const signed = await sign(signKey, exportedSecret);
-    info(chat, "Exporting public derive key...", callsign);
+    info(chat, "Exporting public derive key...", sessionId);
     const myPublicDeriveKey = await exportPublicKey(deriveKeys.publicKey);
 
-    info(chat, "Sending public derive key + signed...", callsign);
-    pendingSecret[session.callsign] = secret;
-    await sendData<MsgKey2>(session, {
+    info(chat, "Sending public derive key + signed...", sessionId);
+    pendingSecret[sessionId] = secret;
+    await sendData<MsgKey2>(session, sessionId, {
+      from: {
+        sessionId: data.home.sessionId,
+        callsign: data.home.callsign,
+      },
       action: "key2",
       publicDeriveKey: myPublicDeriveKey,
       signed,
     });
   } else if (action === "key2") {
     const incoming = incomingRaw as MsgKey2;
-    info(chat, `Importing public derive key...`, callsign);
+    info(chat, `Importing public derive key...`, sessionId);
     const publicDeriveKey = await importPublicDeriveKey(
       incoming.publicDeriveKey
     );
 
-    info(chat, `Creating new secret...`, callsign);
+    info(chat, `Creating new secret...`, sessionId);
     const privateDeriveKey = privateDeriveKeys[callsign];
     const secret = await derive(publicDeriveKey, privateDeriveKey);
-    info(chat, "Exporting secret...", callsign);
+    info(chat, "Exporting secret...", sessionId);
     const exportedSecret = await exportSecretKey(secret);
     const verifyKey = pendingVerifyKey[callsign];
-    info(chat, `Verifying signature with secret...`, callsign);
+    info(chat, `Verifying signature with secret...`, sessionId);
     if (await verify(verifyKey, incoming.signed, exportedSecret)) {
-      success(chat, `Verified signature`, callsign);
-      info(chat, `Importing sign key...`, callsign);
+      success(chat, `Verified signature`, sessionId);
+      info(chat, `Importing sign key...`, sessionId);
       const signKey = await importPrivateSignKey(data.home.key);
-      info(chat, `Signing secret...`, callsign);
+      info(chat, `Signing secret...`, sessionId);
       const signed = await sign(signKey, exportedSecret);
-      info(chat, `Sending signature...`, callsign);
-      await sendData<MsgKey3>(session, {
+      info(chat, `Sending signature...`, sessionId);
+      await sendData<MsgKey3>(session, sessionId, {
+        from: {
+          sessionId: data.home.sessionId,
+          callsign: data.home.callsign,
+        },
         action: "key3",
         signed,
       });
-      session.key = secret;
+      // session.key = secret;
+
       success(chat, `Ready`, callsign);
       session.lines.push({
         text: "Secure channel established!",
@@ -132,31 +138,32 @@ on("!+*", path().chat.sessions.$.incoming, async (incomingRaw: any, { $ }) => {
         data.chat.selectedSession = session.callsign;
       }
     } else {
-      error(chat, `Signature verification failed`, callsign);
+      error(chat, `Signature verification failed`, sessionId);
     }
   } else if (action === "key3") {
     const incoming = incomingRaw as MsgKey3;
-    info(chat, `Importing public verify key...`, callsign);
+    info(chat, `Importing public verify key...`, sessionId);
     const verifyKeyString = await fetchKey(session.callsign);
-    info(chat, `Importing public verify key...`, callsign);
+    info(chat, `Importing public verify key...`, sessionId);
     const verifyKey = await importPublicSignKey(verifyKeyString);
-    const secret = pendingSecret[session.callsign];
-    info(chat, `Exporting secret key...`, callsign);
+    const secret = pendingSecret[sessionId];
+    info(chat, `Exporting secret key...`, sessionId);
     const exportedSecret = await exportSecretKey(secret);
     if (await verify(verifyKey, incoming.signed, exportedSecret)) {
-      success(chat, `Verified signature`, callsign);
-      session.key = secret;
+      success(chat, `Verified signature`, sessionId);
+      session.sessionIdKeys[incoming.from.sessionId] = exportedSecret;
       session.lines.push({
         text: "Secure channel established!",
         type: "success",
       });
       session.active = data.chat.selectedSession !== session.callsign;
     } else {
-      error(chat, `Signature verification failed`, callsign);
+      error(chat, `Signature verification failed`, sessionId);
     }
   } else if (action === "message") {
     const incoming = incomingRaw as MsgMessage;
-    const decrypted = await decrypt(session.key, incoming.iv, incoming.cipher);
+    const key = session.sessionIdKeys[incoming.from.sessionId];
+    const decrypted = await decrypt(key, incoming.iv, incoming.cipher);
     session.lines.push({
       text: decrypted,
       type: "to",
@@ -167,7 +174,7 @@ on("!+*", path().chat.sessions.$.incoming, async (incomingRaw: any, { $ }) => {
       document.title = `Callsign - ${Date.now()}`;
     }
   } else {
-    warning(chat, `Unknown action: ${action}`, callsign);
+    warning(chat, `Unknown action: ${action}`, sessionId);
   }
 });
 
@@ -178,7 +185,7 @@ on("+", path().chat.sessions.$, async (session: Session) => {
 
   const callsign = session.callsign;
   const chat = data.chat;
-  info(chat, `New outgoing session...`, callsign);
+  info(chat, `New outgoing session`, callsign);
   try {
     const verifyKeyString = await fetchKey(session.callsign);
     if (verifyKeyString) {
@@ -192,7 +199,11 @@ on("+", path().chat.sessions.$, async (session: Session) => {
       if (deriveKeys.privateKey) {
         privateDeriveKeys[session.callsign] = deriveKeys.privateKey;
       }
-      await sendData<MsgKey1>(session, {
+      await sendData<MsgKey1>(session, session.callsign, {
+        from: {
+          sessionId: data.home.sessionId,
+          callsign: data.home.callsign,
+        },
         action: "key1",
         publicDeriveKey,
       });

@@ -1,7 +1,13 @@
 type Store = "localStorage" | "sessionStorage" | "none";
 
+interface From {
+  sessionId: string;
+  callsign: string;
+}
+
 interface Message {
   action: "key1" | "key2" | "key3" | "message";
+  from: From;
 }
 
 interface MsgKey1 extends Message {
@@ -17,7 +23,10 @@ interface MsgKey3 extends Message {
   signed: string;
 }
 
+type Msg = MsgKey1 | MsgKey2 | MsgKey3 | undefined;
+
 interface MsgMessage extends Message {
+  sessionId: string;
   cipher: string;
   iv: string;
 }
@@ -27,6 +36,7 @@ interface Home {
   info: string;
   status: "black" | "green" | "red";
   callsign: string;
+  sessionId: string;
   store: boolean;
   key: string;
 }
@@ -50,10 +60,9 @@ interface Loggable {
 interface Session extends Loggable {
   callsign: string;
   direction: "outgoing" | "incoming";
-  outgoing: MsgMsg | MsgKey | MsgKey2 | MsgKey3 | undefined;
-  incoming: MsgMsg | MsgKey | MsgKey2 | MsgKey3 | undefined;
+  incoming: Msg;
   active: boolean;
-  key?: stirng;
+  sessionIdKeys: { [sessionId: string]: string };
 }
 
 interface Chat extends Loggable {

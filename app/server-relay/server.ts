@@ -1,36 +1,10 @@
 import * as ws from "ws";
-import { WebSocket } from "ws";
 
-const listeners: { [key: string]: any[] } = {};
-
-const send = (socket: ws.WebSocket, data: any) =>
-  socket.send(JSON.stringify(data));
+const subscriptions: { [key: string]: any[] } = {};
 
 const wsServer = new ws.Server({ port: 3001 }, () => {
   console.log("Relay ready");
 });
-
-const actions: { [key: string]: any } = {
-  listen({ callsign }: { callsign: string }, socket: WebSocket) {
-    listeners[callsign] = listeners[callsign] || [];
-    listeners[callsign]?.push(socket);
-  },
-
-  async msg(val: any, socket: WebSocket) {
-    const to = listeners[val.toCallsign];
-    if (to) {
-      for (const t of to) {
-        t.send(JSON.stringify(val.value));
-      }
-    } else {
-      send(socket, {
-        type: "msgInfo",
-        status: "notOnline",
-        toCallsign: val.toCallsign,
-      });
-    }
-  },
-};
 
 wsServer.on("connection", (socket) => {
   console.log("connection!");
@@ -38,22 +12,33 @@ wsServer.on("connection", (socket) => {
   socket.on("message", async (message: any) => {
     const d = JSON.parse(message);
     console.log(d);
-    const action: any = actions[d.type];
-    try {
-      if (action) {
-        const res = await action(d, socket);
-        if (res) {
-          send(socket, Object.assign({ type: "reply" }, res));
+    if (typeof d.a !== "string" || typeof d.t !== "string") return;
+    const publish = d.a === "p";
+    const subscribe = d.a === "s";
+    const topic = d.t;
+    const data = d.d;
+
+    if (subscribe) {
+      subscriptions[topic] = subscriptions[topic] || [];
+      subscriptions[topic]?.push(socket);
+      const s = socket as any;
+      s.topics = s.topics || new Set();
+      s.topics.add(topic);
+    } else if (publish && data) {
+      subscriptions[topic]?.forEach((s) => s.send(JSON.stringify(data)));
+    }
+  });
+
+  socket.on("close", () => {
+    const topics = (socket as any).topics as Set<string>;
+    if (topics) {
+      topics.forEach((topic) => {
+        subscriptions[topic] =
+          subscriptions[topic]?.filter((s) => s !== socket) || [];
+        if (subscriptions[topic]?.length === 0) {
+          delete subscriptions[topic];
         }
-      } else {
-        console.log("Unknown action", action, d);
-        send(socket, {
-          error: `Unknown action ${d.type}`,
-          type: "reply",
-        });
-      }
-    } catch (e) {
-      send(socket, { error: e.message, type: "reply" });
+      });
     }
   });
 });

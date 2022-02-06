@@ -70,6 +70,7 @@ export async function derive(publicKey, privateKey) {
     ["encrypt", "decrypt"]
   );
 }
+
 async function importPublicKey(publicKey, usage: KeyUsage, algorithm: any) {
   const pubK = base64ToArrayBuffer(publicKey);
   return window.crypto.subtle.importKey("spki", pubK, algorithm, false, [
@@ -144,4 +145,10 @@ export async function decrypt(secretKey, iv, base64) {
     base64ToArrayBuffer(base64)
   );
   return new TextDecoder().decode(decrypted);
+}
+
+export function getRandomString(byteLength: number) {
+  return arrayBufferToBase64(
+    window.crypto.getRandomValues(new Uint8Array(byteLength))
+  );
 }

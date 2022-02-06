@@ -1,20 +1,26 @@
 import { data, normalize, on, path } from "./dd";
 import { queryTypes } from "../../server-relay/types";
+import { getRandomString } from "./cryptomatic";
 
 let ws: WebSocket | undefined = undefined;
 
-export function send(v: any) {
-  ws?.send(JSON.stringify(v));
+export function send(action: "p" | "s", topic: string, data: any = undefined) {
+  ws?.send(
+    JSON.stringify({
+      a: action,
+      t: topic,
+      d: data,
+    })
+  );
 }
 
-on("!+*", path().chat.sessions.$.outgoing, async (outgoing, { $ }) => {
-  const session = data.chat.sessions[$];
+export async function sendData<T extends Msg>(
+  session: Session,
+  topic: string,
+  data: any
+) {
   try {
-    send({
-      type: "msg",
-      toCallsign: session.callsign,
-      value: { ...outgoing, fromCallsign: data.home.callsign },
-    });
+    send("p", topic, data);
   } catch (e) {
     console.error(e);
     session.lines.push({
@@ -22,7 +28,7 @@ on("!+*", path().chat.sessions.$.outgoing, async (outgoing, { $ }) => {
       type: "error",
     });
   }
-});
+}
 
 let listening = false;
 
@@ -30,7 +36,20 @@ function listen() {
   if (listening) return;
   if (data.home.callsign) {
     listening = true;
-    send({ callsign: data.home.callsign, type: "listen" });
+    const id = getRandomString(12);
+    data.home.sessionId = data.home.callsign + "@" + id;
+
+    data.chat.lines.push({
+      type: "info",
+      text: `Callsign ${data.home.callsign}`,
+    });
+    data.chat.lines.push({
+      type: "info",
+      text: `Session ${data.home.sessionId}`,
+    });
+
+    send("s", data.home.sessionId);
+    send("s", data.home.callsign);
   }
 }
 
@@ -63,22 +82,22 @@ function connect() {
     const val = JSON.parse(m.data);
     console.log(">", val);
 
-    if (!val.fromCallsign) {
+    if (!val.from?.callsign) {
       console.error("No fromCallsign", val);
       return;
     }
 
-    const session = data.chat.sessions[normalize(val.fromCallsign)];
+    const session = data.chat.sessions[normalize(val.from.callsign)];
     if (session) {
       session.incoming = val;
     } else {
-      data.chat.sessions[normalize(val.fromCallsign)] = {
-        callsign: val.fromCallsign,
+      data.chat.sessions[normalize(val.from.callsign)] = {
+        callsign: val.from.callsign,
         active: false,
         lines: [],
         direction: "incoming",
-        outgoing: undefined,
         incoming: val,
+        sessionIdKeys: {},
       };
     }
   });
