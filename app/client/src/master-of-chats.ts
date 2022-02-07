@@ -18,14 +18,13 @@ const privateDeriveKeys: { [callsign: string]: CryptoKey } = {};
 const pendingSecret: { [sessionId: string]: CryptoKey } = {};
 const pendingVerifyKey: { [callsign: string]: CryptoKey } = {};
 
-// // TODO:
+// TODO:
 // setTimeout(() => {
 //   if (data.home.callsign === "b.callsign.network") {
 //     data.chat.sessions[normalize("a.callsign.network")] = {
 //       active: false,
 //       callsign: "a.callsign.network",
 //       direction: "outgoing",
-//       incoming: undefined,
 //       lines: [],
 //       sessionIdKeys: {},
 //     };
@@ -60,12 +59,15 @@ const warning = (loggable: Loggable, text: string, callsign?: string) =>
 const error = (loggable: Loggable, text: string, callsign?: string) =>
   log("error", loggable, text, callsign);
 
-on("!+*", path().chat.sessions.$.incoming, async (incomingRaw: any, { $ }) => {
-  const session = data.chat.sessions[$];
+export async function onMessage(
+  sessionId: string,
+  session: Session,
+  incomingRaw: any
+) {
+  if (!incomingRaw) return;
   const callsign = session.callsign;
   const chat = data.chat;
   const action = incomingRaw.action;
-  const sessionId = incomingRaw.from.sessionId;
 
   if (action === "key1") {
     info(chat, `New incoming session`, sessionId);
@@ -127,7 +129,7 @@ on("!+*", path().chat.sessions.$.incoming, async (incomingRaw: any, { $ }) => {
         action: "key3",
         signed,
       });
-      // session.key = secret;
+      session.sessionIdKeys[sessionId.split("@")[1]] = secret;
 
       success(chat, `Ready`, callsign);
       session.lines.push({
@@ -151,7 +153,7 @@ on("!+*", path().chat.sessions.$.incoming, async (incomingRaw: any, { $ }) => {
     const exportedSecret = await exportSecretKey(secret);
     if (await verify(verifyKey, incoming.signed, exportedSecret)) {
       success(chat, `Verified signature`, sessionId);
-      session.sessionIdKeys[incoming.from.sessionId] = exportedSecret;
+      session.sessionIdKeys[incoming.from.sessionId.split("@")[1]] = secret;
       session.lines.push({
         text: "Secure channel established!",
         type: "success",
@@ -162,7 +164,7 @@ on("!+*", path().chat.sessions.$.incoming, async (incomingRaw: any, { $ }) => {
     }
   } else if (action === "message") {
     const incoming = incomingRaw as MsgMessage;
-    const key = session.sessionIdKeys[incoming.from.sessionId];
+    const key = session.sessionIdKeys[incoming.from.sessionId.split("@")[1]];
     const decrypted = await decrypt(key, incoming.iv, incoming.cipher);
     session.lines.push({
       text: decrypted,
@@ -176,7 +178,7 @@ on("!+*", path().chat.sessions.$.incoming, async (incomingRaw: any, { $ }) => {
   } else {
     warning(chat, `Unknown action: ${action}`, sessionId);
   }
-});
+}
 
 on("+", path().chat.sessions.$, async (session: Session) => {
   if (session.direction === "incoming") {

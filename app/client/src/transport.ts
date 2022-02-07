@@ -1,6 +1,7 @@
 import { data, normalize, on, path } from "./dd";
 import { queryTypes } from "../../server-relay/types";
 import { getRandomString } from "./cryptomatic";
+import { onMessage } from "./master-of-chats";
 
 let ws: WebSocket | undefined = undefined;
 
@@ -87,19 +88,18 @@ function connect() {
       return;
     }
 
-    const session = data.chat.sessions[normalize(val.from.callsign)];
-    if (session) {
-      session.incoming = val;
-    } else {
-      data.chat.sessions[normalize(val.from.callsign)] = {
+    let session = data.chat.sessions[normalize(val.from.callsign)];
+    if (!session) {
+      session = {
         callsign: val.from.callsign,
         active: false,
         lines: [],
         direction: "incoming",
-        incoming: val,
         sessionIdKeys: {},
       };
+      data.chat.sessions[normalize(val.from.callsign)] = session;
     }
+    onMessage(val.from.sessionId, session, val);
   });
 
   ws.addEventListener("close", () => {

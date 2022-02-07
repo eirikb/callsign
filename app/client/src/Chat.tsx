@@ -1,7 +1,7 @@
 import { data, don, normalize, path, React, reset } from "./dd";
 
-import { sendData } from "./master-of-chats";
 import { encrypt } from "./cryptomatic";
+import { sendData } from "./transport";
 
 function connect(e: Event) {
   e.preventDefault();
@@ -12,8 +12,7 @@ function connect(e: Event) {
     lines: [],
     direction: "outgoing",
     callsign,
-    outgoing: undefined,
-    incoming: undefined,
+    sessionIdKeys: {},
   };
 
   data.chat.callsignToConnectTo = "";
@@ -29,8 +28,19 @@ function logout() {
 async function send(e: Event, session: Session) {
   e.preventDefault();
   const text = data.chat.text;
-  const [iv, cipher] = await encrypt(session.key, text);
-  await sendData<MsgMessage>(session, { action: "message", iv, cipher });
+  for (const [sessionId, key] of Object.entries(session.sessionIdKeys)) {
+    const eh = session.callsign + "@" + sessionId;
+    const [iv, cipher] = await encrypt(key, text);
+    await sendData(session, eh, {
+      action: "message",
+      iv,
+      cipher,
+      from: {
+        callsign: data.home.callsign,
+        sessionId: data.home.sessionId,
+      },
+    });
+  }
   session.lines.push({
     text,
     type: "from",
