@@ -95,7 +95,7 @@ function connect() {
         active: false,
         lines: [],
         direction: "incoming",
-        sessionIdKeys: {},
+        sessionIds: {},
       };
       data.chat.sessions[normalize(val.from.callsign)] = session;
     }

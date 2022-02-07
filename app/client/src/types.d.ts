@@ -61,7 +61,7 @@ interface Session extends Loggable {
   callsign: string;
   direction: "outgoing" | "incoming";
   active: boolean;
-  sessionIdKeys: { [sessionId: string]: CryptoKey };
+  sessionIds: { [sessionId: string]: { sessionId: string; key: CryptoKey } };
 }
 
 interface Chat extends Loggable {

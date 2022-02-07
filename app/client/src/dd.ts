@@ -9,7 +9,7 @@ const initial: Data = {
   home: {
     store: getItem("store", "false") === "true",
     callsign: getItem("callsign", ""),
-    sessionCallsign: "",
+    sessionId: "",
     key: "",
     connecting: false,
     status: "black",

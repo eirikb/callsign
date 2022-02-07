@@ -12,7 +12,7 @@ function connect(e: Event) {
     lines: [],
     direction: "outgoing",
     callsign,
-    sessionIdKeys: {},
+    sessionIds: {},
   };
 
   data.chat.callsignToConnectTo = "";
@@ -28,10 +28,9 @@ function logout() {
 async function send(e: Event, session: Session) {
   e.preventDefault();
   const text = data.chat.text;
-  for (const [sessionId, key] of Object.entries(session.sessionIdKeys)) {
-    const eh = session.callsign + "@" + sessionId;
-    const [iv, cipher] = await encrypt(key, text);
-    await sendData(session, eh, {
+  for (const eh of Object.values(session.sessionIds)) {
+    const [iv, cipher] = await encrypt(eh.key, text);
+    await sendData(session, eh.sessionId, {
       action: "message",
       iv,
       cipher,

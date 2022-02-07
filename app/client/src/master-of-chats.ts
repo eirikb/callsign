@@ -13,6 +13,7 @@ import {
   verify,
 } from "./cryptomatic";
 import { sendData } from "./transport";
+import { error, info, success, warning } from "./log";
 
 const privateDeriveKeys: { [callsign: string]: CryptoKey } = {};
 const pendingSecret: { [sessionId: string]: CryptoKey } = {};
@@ -26,38 +27,10 @@ const pendingVerifyKey: { [callsign: string]: CryptoKey } = {};
 //       callsign: "a.callsign.network",
 //       direction: "outgoing",
 //       lines: [],
-//       sessionIdKeys: {},
+//       sessionIds: {},
 //     };
 //   }
 // }, 2000);
-
-const log = (
-  logLevel: LogLevel,
-  loggable: Loggable,
-  text: string,
-  callsign?: string
-) =>
-  // Huh
-  setTimeout(() =>
-    loggable.lines.push({
-      text: callsign
-        ? `[${new Date()
-            .toISOString()
-            .replace(/....Z/, "")
-            .replace(/T/, " ")} ${callsign}] ${text}`
-        : text,
-      type: logLevel,
-    })
-  );
-
-const info = (loggable: Loggable, text: string, callsign?: string) =>
-  log("info", loggable, text, callsign);
-const success = (loggable: Loggable, text: string, callsign?: string) =>
-  log("success", loggable, text, callsign);
-const warning = (loggable: Loggable, text: string, callsign?: string) =>
-  log("warning", loggable, text, callsign);
-const error = (loggable: Loggable, text: string, callsign?: string) =>
-  log("error", loggable, text, callsign);
 
 export async function onMessage(
   sessionId: string,
@@ -129,7 +102,10 @@ export async function onMessage(
         action: "key3",
         signed,
       });
-      session.sessionIdKeys[sessionId.split("@")[1]] = secret;
+      session.sessionIds[normalize(sessionId)] = {
+        sessionId,
+        key: secret,
+      };
 
       success(chat, `Ready`, callsign);
       session.lines.push({
@@ -153,7 +129,10 @@ export async function onMessage(
     const exportedSecret = await exportSecretKey(secret);
     if (await verify(verifyKey, incoming.signed, exportedSecret)) {
       success(chat, `Verified signature`, sessionId);
-      session.sessionIdKeys[incoming.from.sessionId.split("@")[1]] = secret;
+      session.sessionIds[normalize(incoming.from.sessionId)] = {
+        sessionId,
+        key: secret,
+      };
       session.lines.push({
         text: "Secure channel established!",
         type: "success",
@@ -164,7 +143,7 @@ export async function onMessage(
     }
   } else if (action === "message") {
     const incoming = incomingRaw as MsgMessage;
-    const key = session.sessionIdKeys[incoming.from.sessionId.split("@")[1]];
+    const key = session.sessionIds[normalize(incoming.from.sessionId)].key;
     const decrypted = await decrypt(key, incoming.iv, incoming.cipher);
     session.lines.push({
       text: decrypted,
