@@ -47,6 +47,7 @@ async function connect() {
     const d = window.btoa("Hello, world!");
     const signed = await sign(privateKey, d);
     const verified = await verify(publicKey, signed, d);
+    data.verified = verified;
     if (verified) {
       data.home.status = "green";
       data.home.info = "VERIFIED!";

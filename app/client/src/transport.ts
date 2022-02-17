@@ -1,7 +1,7 @@
 import { data, normalize, on, path } from "./dd";
 import { queryTypes } from "../../server-relay/types";
 import { getRandomString } from "./cryptomatic";
-import { onMessage } from "./master-of-chats";
+import { onMessage, onSelfMessage } from "./master-of-chats";
 
 let ws: WebSocket | undefined = undefined;
 
@@ -16,7 +16,7 @@ export function send(action: "p" | "s", topic: string, data: any = undefined) {
 }
 
 export async function sendData<T extends Msg>(
-  session: Session,
+  loggable: Loggable,
   topic: string,
   data: any
 ) {
@@ -24,7 +24,7 @@ export async function sendData<T extends Msg>(
     send("p", topic, data);
   } catch (e) {
     console.error(e);
-    session.lines.push({
+    loggable.lines.push({
       text: "Fail: " + e,
       type: "error",
     });
@@ -54,8 +54,8 @@ function listen() {
   }
 }
 
-on("+!*", path().panel, (p) => {
-  if (p === "chat") {
+on("+!*", path().verified, (verified) => {
+  if (verified) {
     listen();
   }
 });
@@ -85,6 +85,11 @@ function connect() {
 
     if (!val.from?.callsign) {
       console.error("No fromCallsign", val);
+      return;
+    }
+
+    if (val.from.callsign === data.home.callsign) {
+      onSelfMessage(val.from.callsign, val.from.sessionId, val);
       return;
     }
 

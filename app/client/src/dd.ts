@@ -6,6 +6,7 @@ const getItem = (key: string, or: string): string =>
 const initial: Data = {
   panel: "home",
   connected: false,
+  verified: false,
   home: {
     store: getItem("store", "false") === "true",
     callsign: getItem("callsign", ""),

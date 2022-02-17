@@ -98,6 +98,7 @@ interface UploadKey {
 
 interface Data {
   panel: "home" | "chat" | "createKeys" | "registerUser" | "uploadKey";
+  verified: boolean;
   connected: boolean;
   home: Home;
   chat: Chat;
