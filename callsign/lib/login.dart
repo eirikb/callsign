@@ -64,7 +64,7 @@ class LoginApp extends StatelessWidget {
                       padding: EdgeInsets.only(left: 20, right: 20),
                       child: TextField(
                         controller: c.eh,
-                        decoration: InputDecoration(
+                        decoration: const InputDecoration(
                             // suffix: Icon(FontAwesomeIcons.envelope,color: Colors.red,),
                             labelText: "Callsign (domain)",
                             border: OutlineInputBorder(
