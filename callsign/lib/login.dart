@@ -1,19 +1,36 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
-import 'package:http/http.dart' as http;
+import 'package:callsign/cryptomatic.dart' as crypto;
 
 class Controller extends GetxController {
   var status = ''.obs;
-  var eh = TextEditingController();
+  var callsign = TextEditingController();
+  var key = TextEditingController();
 
   setStatus(String status) {
     this.status.value = status;
   }
 }
 
-fetchKey(String callsign) async {
-  return http.get(Uri.parse(
-      """https://${callsign}/${callsign}.key?inyourfacecache=${""}"""));
+login() async {
+  final Controller c = Get.find<Controller>();
+  c.setStatus("Importing private sign key...");
+  final privateSignKey =
+      await crypto.importPrivateSignKey(crypto.Base64String(c.key.text));
+  c.setStatus("Fetching key from ${c.callsign.text}...");
+  final base64PublicSignKey = await crypto.fetchKey(c.callsign.text);
+  c.setStatus("Importing public sign key...");
+  final publicSignKey = await crypto.importPublicSignKey(base64PublicSignKey);
+  c.setStatus("Got public sign key. Verifying...");
+  final signed = await crypto.sign(privateSignKey, 'Hello, world!'.codeUnits);
+  final verified =
+      await crypto.verify(publicSignKey, signed, 'Hello, world!'.codeUnits);
+
+  if (verified) {
+    c.setStatus("Yeah!");
+  } else {
+    c.setStatus("Verification failed");
+  }
 }
 
 class LoginApp extends StatelessWidget {
@@ -63,7 +80,7 @@ class LoginApp extends StatelessWidget {
                     Padding(
                       padding: EdgeInsets.only(left: 20, right: 20),
                       child: TextField(
-                        controller: c.eh,
+                        controller: c.callsign,
                         decoration: const InputDecoration(
                             // suffix: Icon(FontAwesomeIcons.envelope,color: Colors.red,),
                             labelText: "Callsign (domain)",
@@ -73,11 +90,12 @@ class LoginApp extends StatelessWidget {
                             )),
                       ),
                     ),
-                    const Padding(
+                    Padding(
                       padding: EdgeInsets.all(20),
                       child: TextField(
+                        controller: c.key,
                         obscureText: true,
-                        decoration: InputDecoration(
+                        decoration: const InputDecoration(
                             // suffix: Icon(FontAwesomeIcons.eyeSlash,color: Colors.red,),
                             labelText: "Key",
                             border: OutlineInputBorder(
@@ -88,10 +106,8 @@ class LoginApp extends StatelessWidget {
                     ),
                     ElevatedButton(
                       child: const Text("Connect"),
-                      onPressed: () async {
-                        c.setStatus("Connecting ${c.eh.text}...");
-                        // final ok = fetchKey();
-                        // print(ok);
+                      onPressed: () {
+                        login();
                       },
                       style: ElevatedButton.styleFrom(
                           padding: const EdgeInsets.symmetric(
