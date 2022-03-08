@@ -79,7 +79,8 @@ function connect() {
     listen();
     data.connected = true;
   });
-  ws.addEventListener(async (m) => {
+  // @ts-ignore
+  ws.addEventListener("message", async (m) => {
     const val = JSON.parse(m.data);
     console.log(">", val);
 
@@ -105,7 +106,7 @@ function connect() {
       data.chat.sessions[normalize(val.from.callsign)] = session;
     }
     onMessage(val.from.sessionId, session, val);
-  }, "message");
+  });
 
   ws.addEventListener("close", () => {
     listening = false;
