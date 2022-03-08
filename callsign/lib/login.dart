@@ -1,35 +1,61 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
-import 'package:callsign/cryptomatic.dart' as crypto;
+
+import 'cryptomatic.dart' as crypto;
+import 'chat.dart';
+
+enum Level { normal, error, success }
 
 class Controller extends GetxController {
   var status = ''.obs;
-  var callsign = TextEditingController();
-  var key = TextEditingController();
+  var statusColor = Colors.black.obs;
+
+  // TODO:
+  var callsign = TextEditingController(text: 'a.callsign.network');
+
+  // TODO:
+  var key = TextEditingController(
+      text:
+          'MIG2AgEAMBAGByqGSM49AgEGBSuBBAAiBIGeMIGbAgEBBDDn22DAIjOtlvB1uvHAOhooJDZ4LXNyUC7qoO3hHtMrxwzZ1GrfAQf/CkI/pArXZTGhZANiAAQi4iZ8F+O9jrmPaBVeszpuBqssUixzBSV6w0bA3yQinibTV84WVIei0LKxp4KlN8ApTr32QKXj7y/C1gDLfJv5bZ3qns0kKeDMc+ba8ZtEZh6sbDQ7BC6CfvzhCcweApI=');
 
   setStatus(String status) {
     this.status.value = status;
+  }
+
+  setStatusColor(Color statusColor) {
+    this.statusColor.value = statusColor;
   }
 }
 
 login() async {
   final Controller c = Get.find<Controller>();
-  c.setStatus("Importing private sign key...");
-  final privateSignKey =
-      await crypto.importPrivateSignKey(crypto.Base64String(c.key.text));
-  c.setStatus("Fetching key from ${c.callsign.text}...");
-  final base64PublicSignKey = await crypto.fetchKey(c.callsign.text);
-  c.setStatus("Importing public sign key...");
-  final publicSignKey = await crypto.importPublicSignKey(base64PublicSignKey);
-  c.setStatus("Got public sign key. Verifying...");
-  final signed = await crypto.sign(privateSignKey, 'Hello, world!'.codeUnits);
-  final verified =
-      await crypto.verify(publicSignKey, signed, 'Hello, world!'.codeUnits);
 
-  if (verified) {
-    c.setStatus("Yeah!");
-  } else {
-    c.setStatus("Verification failed");
+  try {
+    c.setStatusColor(Colors.black);
+    c.setStatus("Importing private sign key...");
+    final privateSignKey =
+        await crypto.importPrivateSignKey(crypto.Base64String(c.key.text));
+    c.setStatus("Fetching key from ${c.callsign.text}...");
+    final base64PublicSignKey = await crypto.fetchKey(c.callsign.text);
+    c.setStatus("Importing public sign key...");
+    final publicSignKey = await crypto.importPublicSignKey(base64PublicSignKey);
+    c.setStatus("Got public sign key. Verifying...");
+    final signed = await crypto.sign(privateSignKey, 'Hello, world!'.codeUnits);
+    final verified =
+        await crypto.verify(publicSignKey, signed, 'Hello, world!'.codeUnits);
+
+    if (verified) {
+      c.setStatus("Verified!");
+      c.setStatusColor(Colors.green);
+      await Future.delayed(const Duration(seconds: 2));
+      Get.to(const Chat());
+    } else {
+      c.setStatus("Verification failed");
+      c.setStatusColor(Colors.red);
+    }
+  } on Exception catch (e) {
+    c.setStatus(e.toString());
+    c.setStatusColor(Colors.red);
   }
 }
 
@@ -118,9 +144,11 @@ class LoginApp extends StatelessWidget {
                     Padding(
                       padding: const EdgeInsets.all(20),
                       child: Obx(() => Text(
-                            "${c.status}",
-                            style: const TextStyle(
-                                fontSize: 16, fontWeight: FontWeight.bold),
+                            c.status.value,
+                            style: TextStyle(
+                                fontSize: 16,
+                                fontWeight: FontWeight.bold,
+                                color: c.statusColor.value),
                           )),
                     ),
                   ],
