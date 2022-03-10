@@ -24,6 +24,7 @@ wsServer.on("connection", (socket) => {
       const s = socket as any;
       s.topics = s.topics || new Set();
       s.topics.add(topic);
+      socket.send(JSON.stringify({ a: "plugged" }));
     } else if (publish && data) {
       subscriptions[topic]?.forEach((s) => s.send(JSON.stringify(data)));
     }

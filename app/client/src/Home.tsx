@@ -1,4 +1,4 @@
-import { data, on, don, path, React } from "./dd";
+import { data, don, path, React } from "./dd";
 import { Button, Input, Panel, SmallButton } from "./components";
 import {
   fetchKey,
@@ -8,33 +8,19 @@ import {
   verify,
 } from "./cryptomatic";
 
-on("!+*", path().connected, (c) => {
-  if (c) {
-    try {
-      data.home = JSON.parse(localStorage.getItem("home") ?? "");
-      // ffs
-      setTimeout(() => {
-        if (data.home.key) {
-          connect();
-        }
-      });
-    } catch (ignored) {}
-  }
-});
-
 async function submit(event: Event) {
   event.preventDefault();
   await connect();
 }
 
-async function connect() {
+export async function connect() {
   if (data.home.store) {
     localStorage.setItem("home", JSON.stringify(data.home));
   } else {
     localStorage.removeItem("home");
   }
 
-  data.home.connecting = true;
+  data.home.disabled = true;
   data.home.status = "black";
   try {
     data.home.info = "Importing private sign key...";
@@ -50,10 +36,7 @@ async function connect() {
     data.verified = verified;
     if (verified) {
       data.home.status = "green";
-      data.home.info = "VERIFIED!";
-      setTimeout(() => {
-        data.panel = "chat";
-      }, 500);
+      data.home.info = "Callsign verified. Plugging in...";
     } else {
       data.home.status = "red";
       data.home.info = "Unable to verify keys";
@@ -63,7 +46,7 @@ async function connect() {
     data.home.status = "red";
     data.home.info = "Unable to load key";
   }
-  data.home.connecting = false;
+  data.home.disabled = false;
 }
 
 export const Home = () => (
@@ -88,7 +71,7 @@ export const Home = () => (
       end-to-end encryption
     </h3>
     <form onsubmit={submit}>
-      <fieldset disabled={don(path().home.connecting.$path)}>
+      <fieldset disabled={don(path().home.disabled.$path)}>
         <div class="text-left pt-3">
           <Input bind={path().home.callsign.$path} label="Callsign (domain)" />
           <Input
@@ -116,6 +99,9 @@ export const Home = () => (
         </div>
       </fieldset>
     </form>
+
+    <hr class="mt-3 mb-3" />
+
     <div class="flow flow-col">
       <p>Don't have a callsign?</p>
       <div>

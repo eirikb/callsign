@@ -32,11 +32,10 @@ interface MsgMessage extends Message {
 }
 
 interface Home {
-  connecting: boolean;
+  disabled: boolean;
   info: string;
   status: "black" | "green" | "red";
   callsign: string;
-  sessionId: string;
   store: boolean;
   key: string;
 }
@@ -98,8 +97,9 @@ interface UploadKey {
 
 interface Data {
   panel: "home" | "chat" | "createKeys" | "registerUser" | "uploadKey";
-  verified: boolean;
   connected: boolean;
+  verified: boolean;
+  plugged: boolean;
   home: Home;
   chat: Chat;
   createKey: CreateKey;

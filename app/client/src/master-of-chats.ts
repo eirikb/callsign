@@ -1,4 +1,4 @@
-import { data, normalize, on, path } from "./dd";
+import { data, normalize } from "./dd";
 import {
   decrypt,
   derive,
@@ -54,15 +54,16 @@ async function onKey1(
 
   info(loggable, "Sending public derive key + signed...", sessionId);
   pendingSecret[sessionId] = secret;
-  await sendData<MsgKey2>(loggable, sessionId, {
-    from: {
-      sessionId: data.home.sessionId,
-      callsign: data.home.callsign,
-    },
-    action: "key2",
-    publicDeriveKey: myPublicDeriveKey,
-    signed,
-  });
+  // TODO:
+  // await sendData<MsgKey2>(loggable, sessionId, {
+  //   from: {
+  //     sessionId: data.home.sessionId,
+  //     callsign: data.home.callsign,
+  //   },
+  //   action: "key2",
+  //   publicDeriveKey: myPublicDeriveKey,
+  //   signed,
+  // });
 }
 
 async function onKey2(
@@ -88,14 +89,15 @@ async function onKey2(
     info(loggable, `Signing secret...`, sessionId);
     const signed = await sign(signKey, exportedSecret);
     info(loggable, `Sending signature...`, sessionId);
-    await sendData<MsgKey3>(loggable, sessionId, {
-      from: {
-        sessionId: data.home.sessionId,
-        callsign: data.home.callsign,
-      },
-      action: "key3",
-      signed,
-    });
+    // TODO:
+    // await sendData<MsgKey3>(loggable, sessionId, {
+    //   from: {
+    //     sessionId: data.home.sessionId,
+    //     callsign: data.home.callsign,
+    //   },
+    //   action: "key3",
+    //   signed,
+    // });
     success(loggable, `Ready`, callsign);
     loggable.lines.push({
       text: "Secure channel established!",
@@ -208,59 +210,50 @@ export async function onMessage(
   }
 }
 
-on("!+*", path().verified, (verified) => {
-  if (verified) {
-    // Ensure listeners are called and ready
-    setTimeout(async () => {
-      // console.log("send to", data.home.callsign);
-      // send("p", data.home.callsign, {
+export async function syncDevices() {
+  // console.log("send to", data.home.callsign);
+  // send("p", data.home.callsign, {
+  //   from: {
+  //     sessionId: data.home.sessionId,
+  //     callsign: data.home.callsign,
+  //   },
+  //   action: "sync",
+  // });
+  const chat = data.chat;
+  const callsign = data.home.callsign;
+  info(chat, `Preparing devices sync`, callsign);
+  try {
+    const verifyKeyString = await fetchKey(callsign);
+    if (verifyKeyString) {
+      info(chat, `Importing public verify key...`, callsign);
+      pendingVerifyKey[callsign] = await importPublicSignKey(verifyKeyString);
+      info(chat, "Generating new derive key...", callsign);
+      const deriveKeys = await generateDeriveKeys();
+      info(chat, "Exporting public derive key...", callsign);
+      const publicDeriveKey = await exportPublicKey(deriveKeys.publicKey);
+      info(chat, "Sending public derive key...", callsign);
+      if (deriveKeys.privateKey) {
+        privateDeriveKeys[callsign] = deriveKeys.privateKey;
+      }
+
+      // TODO:
+      // await sendData<MsgKey1>(chat, callsign, {
       //   from: {
       //     sessionId: data.home.sessionId,
       //     callsign: data.home.callsign,
       //   },
-      //   action: "sync",
+      //   action: "key1",
+      //   publicDeriveKey,
       // });
-      const chat = data.chat;
-      const callsign = data.home.callsign;
-      info(chat, `Preparing devices sync`, callsign);
-      try {
-        const verifyKeyString = await fetchKey(callsign);
-        if (verifyKeyString) {
-          info(chat, `Importing public verify key...`, callsign);
-          pendingVerifyKey[callsign] = await importPublicSignKey(
-            verifyKeyString
-          );
-          info(chat, "Generating new derive key...", callsign);
-          const deriveKeys = await generateDeriveKeys();
-          info(chat, "Exporting public derive key...", callsign);
-          const publicDeriveKey = await exportPublicKey(deriveKeys.publicKey);
-          info(chat, "Sending public derive key...", callsign);
-          if (deriveKeys.privateKey) {
-            privateDeriveKeys[callsign] = deriveKeys.privateKey;
-          }
-          await sendData<MsgKey1>(chat, callsign, {
-            from: {
-              sessionId: data.home.sessionId,
-              callsign: data.home.callsign,
-            },
-            action: "key1",
-            publicDeriveKey,
-          });
-        } else {
-          warning(chat, "Key failed", callsign);
-        }
-      } catch (e) {
-        error(chat, `${e}`, callsign);
-      }
-    }, 3000);
+    } else {
+      warning(chat, "Key failed", callsign);
+    }
+  } catch (e) {
+    error(chat, `${e}`, callsign);
   }
-});
+}
 
-on("+", path().chat.sessions.$, async (session: Session) => {
-  if (session.direction === "incoming") {
-    return;
-  }
-
+export async function onSession(session: Session) {
   const callsign = session.callsign;
   const chat = data.chat;
   info(chat, `New outgoing session`, callsign);
@@ -277,18 +270,19 @@ on("+", path().chat.sessions.$, async (session: Session) => {
       if (deriveKeys.privateKey) {
         privateDeriveKeys[session.callsign] = deriveKeys.privateKey;
       }
-      await sendData<MsgKey1>(session, session.callsign, {
-        from: {
-          sessionId: data.home.sessionId,
-          callsign: data.home.callsign,
-        },
-        action: "key1",
-        publicDeriveKey,
-      });
+      // TODO:
+      // await sendData<MsgKey1>(session, session.callsign, {
+      //   from: {
+      //     sessionId: data.home.sessionId,
+      //     callsign: data.home.callsign,
+      //   },
+      //   action: "key1",
+      //   publicDeriveKey,
+      // });
     } else {
       warning(chat, "Key failed", callsign);
     }
   } catch (e) {
     error(chat, `${e}`, callsign);
   }
-});
+}

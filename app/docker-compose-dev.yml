@@ -21,11 +21,11 @@ services:
     volumes:
       - ./server-relay:/app
     working_dir: /app
-    command: ./node_modules/.bin/ts-node --files server.ts
+    command: ./node_modules/.bin/ts-node-dev --files server.ts
 
   server-demo:
     image: node:16
     volumes:
       - ./server-demo:/app
     working_dir: /app
-    command: ./node_modules/.bin/ts-node --files server.ts
+    command: ./node_modules/.bin/ts-node-dev --files server.ts

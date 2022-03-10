@@ -1,4 +1,4 @@
-import { data, normalize, on, path } from "./dd";
+import { data, normalize } from "./dd";
 import { queryTypes } from "../../server-relay/types";
 import { getRandomString } from "./cryptomatic";
 import { onMessage, onSelfMessage } from "./master-of-chats";
@@ -31,34 +31,30 @@ export async function sendData<T extends Msg>(
   }
 }
 
-let listening = false;
+let plugging = false;
 
-function listen() {
-  if (listening) return;
+export function listen() {
+  if (plugging) {
+    console.log("PLuggging...");
+    return;
+  }
+  if (data.plugged) {
+    console.log("already plugged");
+    return;
+  }
   if (data.home.callsign) {
-    listening = true;
+    data.plugged = true;
     const id = getRandomString(12);
-    data.home.sessionId = data.home.callsign + "@" + id;
 
     data.chat.lines.push({
       type: "info",
       text: `Callsign ${data.home.callsign}`,
     });
-    data.chat.lines.push({
-      type: "info",
-      text: `Session ${data.home.sessionId}`,
-    });
 
-    send("s", data.home.sessionId);
     send("s", data.home.callsign);
+    plugging = true;
   }
 }
-
-on("+!*", path().verified, (verified) => {
-  if (verified) {
-    listen();
-  }
-});
 
 export async function query<T, R>(type: queryTypes, data: T): Promise<R> {
   return fetch(`/demo/${type}`, {
@@ -76,13 +72,23 @@ function connect() {
   );
   ws.addEventListener("open", () => {
     console.log("Connected");
-    listen();
+    // listen();
     data.connected = true;
   });
   // @ts-ignore
   ws.addEventListener("message", async (m) => {
     const val = JSON.parse(m.data);
     console.log(">", val);
+
+    if (val.a === "plugged") {
+      data.plugged = true;
+      data.home.info = "Plugged in";
+      plugging = false;
+      setTimeout(() => {
+        data.panel = "chat";
+      }, 500);
+      return;
+    }
 
     if (!val.from?.callsign) {
       console.error("No fromCallsign", val);
@@ -109,7 +115,9 @@ function connect() {
   });
 
   ws.addEventListener("close", () => {
-    listening = false;
+    data.connected = false;
+    data.plugged = false;
+    plugging = false;
     console.log("reconnect");
     setTimeout(connect, 1000);
   });
