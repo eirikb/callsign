@@ -61,6 +61,7 @@ interface Session extends Loggable {
   direction: "outgoing" | "incoming";
   active: boolean;
   sessionIds: { [sessionId: string]: { sessionId: string; key: CryptoKey } };
+  plugId: number;
 }
 
 interface Chat extends Loggable {
@@ -105,4 +106,5 @@ interface Data {
   createKey: CreateKey;
   registerUser: RegisterUser;
   uploadKey: UploadKey;
+  plugId: number;
 }

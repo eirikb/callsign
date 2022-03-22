@@ -6,8 +6,19 @@ const wsServer = new ws.Server({ port: 3001 }, () => {
   console.log("Relay ready");
 });
 
+const clients: { [id: number]: WebSocket } = {};
+
+function generateId(client: WebSocket): number {
+  const id = Math.random() * Math.pow(10, 18);
+  if (clients[id]) return generateId(client);
+  clients[id] = client;
+  return id;
+}
+
 wsServer.on("connection", (socket) => {
   console.log("connection!");
+
+  socket.send(JSON.stringify({ a: "plugged", id: generateId(socket as any) }));
 
   socket.on("message", async (message: any) => {
     const d = JSON.parse(message);
@@ -24,9 +35,9 @@ wsServer.on("connection", (socket) => {
       const s = socket as any;
       s.topics = s.topics || new Set();
       s.topics.add(topic);
-      socket.send(JSON.stringify({ a: "plugged" }));
     } else if (publish && data) {
       subscriptions[topic]?.forEach((s) => s.send(JSON.stringify(data)));
+      clients[Number(topic)]?.send(JSON.stringify(data));
     }
   });
 

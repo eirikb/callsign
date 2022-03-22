@@ -7,11 +7,21 @@ import {
   sign,
   verify,
 } from "./cryptomatic";
+import { Channel } from "./transport";
 
 async function submit(event: Event) {
   event.preventDefault();
   await connect();
 }
+
+(async () => {
+  data.home.info = "Connecting...";
+  const channel = new Channel();
+  await channel.onConnect();
+  data.home.info = "Connected! Waiting for plug...";
+  const id = await channel.onPlugged();
+  data.home.info = `Plugged! ${id}`;
+})();
 
 export async function connect() {
   if (data.home.store) {
