@@ -13,6 +13,7 @@ import {
   verify,
 } from "./cryptomatic";
 import { error, info, log, success, warning } from "./log";
+import { Channel } from "./transport";
 
 const privateDeriveKeys: { [callsign: string]: CryptoKey } = {};
 const pendingSecret: { [sessionId: string]: CryptoKey } = {};
@@ -259,30 +260,34 @@ export async function onSession(session: Session) {
   info(chat, `New outgoing session`, callsign);
   try {
     info(chat, `Fetching verify key`, callsign);
-    // const verifyKeyString = await fetchKey(session.callsign);
-    // if (verifyKeyString) {
-    //   info(chat, `Importing public verify key...`, callsign);
-    //   pendingVerifyKey[callsign] = await importPublicSignKey(verifyKeyString);
-    //   info(chat, "Generating new derive key...", callsign);
-    //   const deriveKeys = await generateDeriveKeys();
-    //   info(chat, "Exporting public derive key...", callsign);
-    //   const publicDeriveKey = await exportPublicKey(deriveKeys.publicKey);
-    //   info(chat, "Sending public derive key...", callsign);
-    //   if (deriveKeys.privateKey) {
-    //     privateDeriveKeys[session.callsign] = deriveKeys.privateKey;
-    //   }
-    // TODO:
-    // await sendData<MsgKey1>(session, session.callsign, {
-    //   from: {
-    //     sessionId: data.home.sessionId,
-    //     callsign: data.home.callsign,
-    //   },
-    //   action: "key1",
-    //   publicDeriveKey,
-    // });
-    // } else {
-    //   warning(chat, "Key failed", callsign);
-    // }
+    const verifyKeyString = await fetchKey(session.callsign);
+    if (verifyKeyString) {
+      info(chat, `Importing public verify key...`, callsign);
+      pendingVerifyKey[callsign] = await importPublicSignKey(verifyKeyString);
+      info(chat, `Creating new plug...`, callsign);
+      const channel = new Channel();
+      await channel.onConnect();
+      info(chat, `Connected, plugging...`, callsign);
+      const plugId = await channel.onPlugged();
+      info(chat, `Plugged. Generating new derive key...`, callsign);
+      info(chat, "Generating new derive key...", callsign);
+      const deriveKeys = await generateDeriveKeys();
+      info(chat, "Exporting public derive key...", callsign);
+      const publicDeriveKey = await exportPublicKey(deriveKeys.publicKey);
+      info(chat, "Sending public derive key...", callsign);
+      if (deriveKeys.privateKey) {
+        privateDeriveKeys[callsign] = deriveKeys.privateKey;
+      }
+      await channel.sendData<MsgKey1>(session, callsign, {
+        from: {
+          plugId,
+        },
+        action: "key1",
+        publicDeriveKey,
+      });
+    } else {
+      warning(chat, "Key failed", callsign);
+    }
   } catch (e) {
     error(chat, `${e}`, callsign);
   }

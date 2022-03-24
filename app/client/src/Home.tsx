@@ -14,13 +14,22 @@ async function submit(event: Event) {
   await connect();
 }
 
+const channel = new Channel();
+
 (async () => {
-  data.home.info = "Connecting...";
-  const channel = new Channel();
-  await channel.onConnect();
-  data.home.info = "Connected! Waiting for plug...";
-  const id = await channel.onPlugged();
-  data.home.info = `Plugged! ${id}`;
+  try {
+    data.home.info = "Connecting...";
+    await channel.onConnect();
+    data.home.info = "Connected! Waiting for plug...";
+    data.plugId = await channel.onPlugged();
+    data.home.status = "green";
+    data.home.info = `Plugged!`;
+    data.home.disabled = false;
+    data.connected = true;
+  } catch (e: any) {
+    data.home.info = "Error: " + e.message;
+    data.home.status = "red";
+  }
 })();
 
 export async function connect() {
@@ -45,8 +54,12 @@ export async function connect() {
     const verified = await verify(publicKey, signed, d);
     data.verified = verified;
     if (verified) {
+      await channel.send("s", data.home.callsign);
       data.home.status = "green";
-      data.home.info = "Callsign verified. Plugging in...";
+      data.home.info = "Callsign verified!";
+      setTimeout(() => {
+        data.panel = "chat";
+      }, 500);
     } else {
       data.home.status = "red";
       data.home.info = "Unable to verify keys";

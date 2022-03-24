@@ -1,6 +1,5 @@
 import { data, on, path } from "./dd";
 import { syncDevices, onSession } from "./master-of-chats";
-import { listen } from "./transport";
 import { connect } from "./Home";
 
 const domainifyi = (url: string): string =>
@@ -52,6 +51,7 @@ on("+", path().chat.sessions.$, async (session: Session) => {
 
 on("+!*", path().verified, (verified) => {
   if (verified) {
-    listen();
+    console.log("OK!");
+    // listen();
   }
 });

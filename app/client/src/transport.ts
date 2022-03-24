@@ -1,7 +1,5 @@
 import { queryTypes } from "../../server-relay/types";
 
-let ws: WebSocket | undefined = undefined;
-
 export class Channel extends EventTarget {
   ws: WebSocket;
   plugId: number | undefined = undefined;
@@ -30,15 +28,15 @@ export class Channel extends EventTarget {
   onError = (cb: (e: any) => void) => this.on("error", cb);
 
   connect() {
-    const ws = new WebSocket(
+    this.ws = new WebSocket(
       `${location.protocol === "http:" ? "ws" : "wss"}://${location.host}/relay`
     );
-    ws.addEventListener("open", () => {
+    this.ws.addEventListener("open", () => {
       console.log("Connected");
       this.dispatchEvent(new Event("connect"));
     });
     // @ts-ignore
-    ws.addEventListener("message", async (m) => {
+    this.ws.addEventListener("message", async (m) => {
       const val = JSON.parse(m.data);
       console.log(">", val);
       if (val.a === "plugged") {
@@ -49,22 +47,22 @@ export class Channel extends EventTarget {
       }
     });
 
-    ws.addEventListener("close", () => {
+    this.ws.addEventListener("close", () => {
       this.dispatchEvent(new Event("close"));
       console.log("reconnect");
       setTimeout(this.connect, 1000);
     });
-    ws.addEventListener("error", (err) => {
+    this.ws.addEventListener("error", (err) => {
       console.error(err);
       this.dispatchEvent(new Event("error", err));
-      ws.close();
+      this.ws?.close();
     });
 
-    return ws;
+    return this.ws;
   }
 
   async send(action: "p" | "s", topic: string, data: any = undefined) {
-    ws?.send(
+    this.ws?.send(
       JSON.stringify({
         a: action,
         t: topic,
