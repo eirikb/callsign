@@ -1,4 +1,5 @@
 import domdom from "@eirikb/domdom";
+import { Com } from "./com";
 
 const getItem = (key: string, or: string): string =>
   localStorage.getItem(key) || sessionStorage.getItem(key) || or;
@@ -68,3 +69,5 @@ export const path = dd.path;
 export const on = dd.on;
 
 export const normalize = (str: string) => str.replace(/\./g, "_").trim();
+
+export const com = new Com();

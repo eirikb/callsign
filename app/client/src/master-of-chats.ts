@@ -12,8 +12,9 @@ import {
   sign,
   verify,
 } from "./cryptomatic";
-import { error, info, log, success, warning } from "./log";
-import { Channel } from "./transport";
+import { error, info, success, warning } from "./log";
+import { Channel } from "./channel";
+import { dealWithChannel } from "./on";
 
 const privateDeriveKeys: { [callsign: string]: CryptoKey } = {};
 const pendingSecret: { [sessionId: string]: CryptoKey } = {};
@@ -33,7 +34,7 @@ setTimeout(() => {
   }
 }, 3000);
 
-async function onKey1(
+export async function onKey1(
   loggable: Loggable,
   sessionId: string,
   incoming: MsgKey1
@@ -232,6 +233,7 @@ export async function syncDevices() {
       const deriveKeys = await generateDeriveKeys();
       info(chat, "Exporting public derive key...", callsign);
       const publicDeriveKey = await exportPublicKey(deriveKeys.publicKey);
+      console.log("KEY!?!", publicDeriveKey);
       info(chat, "Sending public derive key...", callsign);
       if (deriveKeys.privateKey) {
         privateDeriveKeys[callsign] = deriveKeys.privateKey;
@@ -264,13 +266,13 @@ export async function onSession(session: Session) {
     if (verifyKeyString) {
       info(chat, `Importing public verify key...`, callsign);
       pendingVerifyKey[callsign] = await importPublicSignKey(verifyKeyString);
-      info(chat, `Creating new plug...`, callsign);
+      info(chat, `Creating new channel ...`, callsign);
       const channel = new Channel();
+      dealWithChannel(channel);
       await channel.onConnect();
-      info(chat, `Connected, plugging...`, callsign);
+      info(chat, `Plugging channel...`, callsign);
       const plugId = await channel.onPlugged();
-      info(chat, `Plugged. Generating new derive key...`, callsign);
-      info(chat, "Generating new derive key...", callsign);
+      info(chat, `Generating new derive key...`, callsign);
       const deriveKeys = await generateDeriveKeys();
       info(chat, "Exporting public derive key...", callsign);
       const publicDeriveKey = await exportPublicKey(deriveKeys.publicKey);

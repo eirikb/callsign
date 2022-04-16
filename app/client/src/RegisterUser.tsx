@@ -1,6 +1,6 @@
 import { data, don, path, React } from "./dd";
 import { BackLink, Button, Input, Panel, Status } from "./components";
-import { query } from "./transport";
+import { query } from "./channel";
 import { RegisterUserQuery, RegisterUserReply } from "../../server-relay/types";
 
 async function submit(e: Event) {

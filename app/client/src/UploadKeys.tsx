@@ -5,7 +5,7 @@ import {
   exportPublicKey,
   generateSignKeys,
 } from "./cryptomatic";
-import { query } from "./transport";
+import { query } from "./channel";
 import { UploadKeyQuery, UploadKeyReply } from "../../server-relay/types";
 
 async function submit(e: Event) {

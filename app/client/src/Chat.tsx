@@ -1,23 +1,41 @@
-import { data, don, normalize, path, React, reset } from "./dd";
+import { data, don, normalize, path, React, reset, com } from "./dd";
+// import { Sessions } from "./com";
 
-import { encrypt } from "./cryptomatic";
-import { sendData } from "./transport";
+// export const sessions = new Sessions(data.chat);
+
+// import { encrypt } from "./cryptomatic";
+// import { sendData } from "./channel";
+
+setTimeout(() => {
+  if (data.home.callsign === "b.callsign.network") {
+    // data.chat.sessions[normalize("a.callsign.network")] = {
+    //   active: false,
+    //   callsign: "a.callsign.network",
+    //   direction: "outgoing",
+    //   lines: [],
+    //   sessionIds: {},
+    //   plugId: 0,
+    // };
+    console.log("LET US GO!");
+  }
+}, 3000);
 
 function connect(e: Event) {
   e.preventDefault();
-
-  const callsign = data.chat.callsignToConnectTo;
-  data.chat.sessions[normalize(callsign)] = {
-    active: false,
-    lines: [],
-    direction: "outgoing",
-    callsign,
-    sessionIds: {},
-  };
-
-  data.chat.callsignToConnectTo = "";
-  data.chat.selectedSession = "";
-  data.chat.menuOpen = false;
+  console.log("no connect");
+  //
+  // const callsign = data.chat.callsignToConnectTo;
+  // data.chat.sessions[normalize(callsign)] = {
+  //   active: false,
+  //   lines: [],
+  //   direction: "outgoing",
+  //   callsign,
+  //   sessionIds: {},
+  // };
+  //
+  // data.chat.callsignToConnectTo = "";
+  // data.chat.selectedSession = "";
+  // data.chat.menuOpen = false;
 }
 
 function logout() {
@@ -27,24 +45,25 @@ function logout() {
 
 async function send(e: Event, session: Session) {
   e.preventDefault();
-  const text = data.chat.text;
-  for (const eh of Object.values(session.sessionIds)) {
-    const [iv, cipher] = await encrypt(eh.key, text);
-    await sendData(session, eh.sessionId, {
-      action: "message",
-      iv,
-      cipher,
-      from: {
-        callsign: data.home.callsign,
-        sessionId: data.home.sessionId,
-      },
-    });
-  }
-  session.lines.push({
-    text,
-    type: "from",
-  });
-  data.chat.text = "";
+  console.log("no send");
+  // const text = data.chat.text;
+  // for (const eh of Object.values(session.sessionIds)) {
+  //   const [iv, cipher] = await encrypt(eh.key, text);
+  //   await sendData(session, eh.sessionId, {
+  //     action: "message",
+  //     iv,
+  //     cipher,
+  //     from: {
+  //       callsign: data.home.callsign,
+  //       sessionId: data.home.sessionId,
+  //     },
+  //   });
+  // }
+  // session.lines.push({
+  //   text,
+  //   type: "from",
+  // });
+  // data.chat.text = "";
 }
 
 function LogLine({ m }: { m: Line }) {

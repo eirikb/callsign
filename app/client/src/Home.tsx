@@ -1,76 +1,108 @@
-import { data, don, path, React } from "./dd";
+import { data, don, path, React, com } from "./dd";
 import { Button, Input, Panel, SmallButton } from "./components";
-import {
-  fetchKey,
-  importPrivateSignKey,
-  importPublicSignKey,
-  sign,
-  verify,
-} from "./cryptomatic";
-import { Channel } from "./transport";
+import { PlugId } from "./com";
 
 async function submit(event: Event) {
   event.preventDefault();
   await connect();
 }
 
-const channel = new Channel();
+data.home.info = "Connecting...";
 
-(async () => {
-  try {
-    data.home.info = "Connecting...";
-    await channel.onConnect();
-    data.home.info = "Connected! Waiting for plug...";
-    data.plugId = await channel.onPlugged();
-    data.home.status = "green";
-    data.home.info = `Plugged!`;
-    data.home.disabled = false;
-    data.connected = true;
-  } catch (e: any) {
-    data.home.info = "Error: " + e.message;
-    data.home.status = "red";
-  }
-})();
+com.addStep({
+  connect: {
+    closed() {
+      console.log("closed");
+    },
+    connected() {
+      data.home.info = "Connected!";
+      try {
+        data.home = JSON.parse(localStorage.getItem("home") ?? "");
+        // ffs
+        setTimeout(() => {
+          if (data.home.key) {
+            connect();
+          }
+        });
+      } catch (ignored) {}
+    },
+    plugged() {
+      data.home.info = "Plugged!";
+      data.home.status = "green";
+      data.home.disabled = false;
+    },
+  },
+  verify: {
+    ownKeyImported() {
+      data.home.info = "Key imported";
+    },
+    ownKeyVerified(verified: boolean) {
+      if (verified) {
+        data.home.status = "green";
+        data.home.info = "Verified!";
+        setTimeout(() => {
+          data.panel = "chat";
+        }, 500);
+      } else {
+        data.home.status = "red";
+        data.home.info = "Not verified";
+      }
+    },
+    ownPublicKeyFetched() {
+      data.home.info = "Public key fetched";
+    },
+    ownPublicKeyImported() {
+      data.home.info = "Public key imported";
+    },
+  },
+});
 
-export async function connect() {
+function connect() {
+  data.home.disabled = true;
+  data.home.status = "black";
+  data.home.info = "Verifying...";
+
   if (data.home.store) {
     localStorage.setItem("home", JSON.stringify(data.home));
   } else {
     localStorage.removeItem("home");
   }
 
-  data.home.disabled = true;
-  data.home.status = "black";
-  try {
-    data.home.info = "Importing private sign key...";
-    const privateKey = await importPrivateSignKey(data.home.key);
-    data.home.info = "Loading public key...";
-    const publicKeyString = await fetchKey(data.home.callsign);
-    data.home.info = "Importing public sign key...";
-    const publicKey = await importPublicSignKey(publicKeyString);
-    data.home.info = "Verifying keys...";
-    const d = window.btoa("Hello, world!");
-    const signed = await sign(privateKey, d);
-    const verified = await verify(publicKey, signed, d);
-    data.verified = verified;
-    if (verified) {
-      await channel.send("s", data.home.callsign);
-      data.home.status = "green";
-      data.home.info = "Callsign verified!";
-      setTimeout(() => {
-        data.panel = "chat";
-      }, 500);
-    } else {
-      data.home.status = "red";
-      data.home.info = "Unable to verify keys";
-    }
-  } catch (e) {
-    console.error(e);
-    data.home.status = "red";
-    data.home.info = "Unable to load key";
-  }
-  data.home.disabled = false;
+  com.verify(data.home.callsign, data.home.key);
 }
+
+// export async function connect() {
+//
+//   try {
+//     data.home.info = "Importing private sign key...";
+//     const privateKey = await importPrivateSignKey(data.home.key);
+//     data.home.info = "Loading public key...";
+//     const publicKeyString = await fetchKey(data.home.callsign);
+//     data.home.info = "Importing public sign key...";
+//     const publicKey = await importPublicSignKey(publicKeyString);
+//     data.home.info = "Verifying keys...";
+//     const d = window.btoa("Hello, world!");
+//     const signed = await sign(privateKey, d);
+//     const verified = await verify(publicKey, signed, d);
+//     data.verified = verified;
+//     if (verified) {
+//       await com.mainChan.send("s", data.home.callsign);
+//       data.home.status = "green";
+//       data.home.info = "Callsign verified!";
+//       setTimeout(() => {
+//         data.panel = "chat";
+//       }, 500);
+//     } else {
+//       data.home.status = "red";
+//       data.home.info = "Unable to verify keys";
+//     }
+//   } catch (e) {
+//     console.error(e);
+//     data.home.status = "red";
+//     data.home.info = "Unable to load key";
+//   }
+//   data.home.disabled = false;
+// }
 
 export const Home = () => (
   <Panel>

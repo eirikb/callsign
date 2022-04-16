@@ -106,5 +106,4 @@ interface Data {
   createKey: CreateKey;
   registerUser: RegisterUser;
   uploadKey: UploadKey;
-  plugId: number;
 }

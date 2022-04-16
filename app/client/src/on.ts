@@ -1,6 +1,8 @@
 import { data, on, path } from "./dd";
-import { syncDevices, onSession } from "./master-of-chats";
+// import { syncDevices, onSession, onKey1 } from "./master-of-chats";
 import { connect } from "./Home";
+// import { Channel } from "./channel";
+// import { info } from "./log";
 
 const domainifyi = (url: string): string =>
   (url || "").toLowerCase().replace(" ", "");
@@ -46,12 +48,22 @@ on("+", path().chat.sessions.$, async (session: Session) => {
     return;
   }
 
-  await onSession(session);
+  // await onSession(session);
 });
 
-on("+!*", path().verified, (verified) => {
-  if (verified) {
-    console.log("OK!");
-    // listen();
-  }
-});
+export function dealWithChannel(channel: Channel) {
+  channel.onMessage(async (d) => {
+    console.log("  !!", channel.plugId, d);
+    if (d.action === "key1") {
+      // info(data.chat, `New incoming session`, d.from.plugId);
+      // await onKey1(data.chat, d.from.plugId, d);
+    }
+  });
+}
+
+// on("+!*", path().verified, (verified) => {
+//   if (verified) {
+//     // console.log("OK!");
+//     // listen();
+//   }
+// });
