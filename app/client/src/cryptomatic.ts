@@ -8,6 +8,8 @@ const deriveAlgorithm = {
   namedCurve: "P-384",
 };
 
+export type Base64 = string;
+
 function arrayBufferToBase64(buffer: ArrayBuffer) {
   let binary = "";
   const bytes = new Uint8Array(buffer);
