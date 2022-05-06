@@ -19,7 +19,7 @@ import {
   decrypt,
 } from "./cryptomatic";
 
-export type PlugId = number;
+export type PlugId = string;
 
 export type Step = {
   key1?: {
@@ -63,15 +63,30 @@ export type Step = {
 };
 
 export class Com {
-  private sessions: { [key: string]: Session } = {};
-  public mainChan: Chan;
+  private mainChan: Chan;
   private steps: Step[] = [];
   private privateDeriveKeys: { [callsign: string]: CryptoKey } = {};
-  private pendingSecret: { [sessionId: string]: CryptoKey } = {};
-  private secrets: { [sessionId: string]: CryptoKey } = {};
+  private pendingSecret: { [plugId: PlugId]: CryptoKey } = {};
+  private pipes: {
+    [plugId: PlugId]: { chan: Chan; topic: string; secret: CryptoKey };
+  } = {};
+  private pipeConnections: { [callsign: string]: PlugId[] } = {};
   private pendingVerifyKey: { [callsign: string]: CryptoKey } = {};
   private privateKey: CryptoKey | undefined;
   private callsign?: string;
+
+  addPipe(
+    callsign: string,
+    plugId: PlugId,
+    chan: Chan,
+    topic: string,
+    secret: CryptoKey
+  ) {
+    this.pipeConnections[callsign] = this.pipeConnections[callsign] || [];
+    this.pipeConnections[callsign].push(plugId);
+
+    this.pipes[plugId] = { chan, topic, secret };
+  }
 
   constructor() {
     const self = this;
@@ -133,11 +148,29 @@ export class Com {
 
               const [iv, encrypted] = await encrypt(secret, "greetings");
 
+              self.addPipe(
+                decrypted.callsign,
+                data.plugId,
+                self.mainChan,
+                data.plugId,
+                secret
+              );
+
               await self.mainChan.send("p", data.plugId, {
                 a: "key4",
                 iv,
                 encrypted,
               });
+            } else if (data.a === "msg") {
+              if (self.pipes[data.plugId]) {
+                const { secret } = self.pipes[data.plugId];
+                const decrypted = await decrypt(
+                  secret,
+                  data.iv,
+                  data.encrypted
+                );
+                console.log("decrypted", decrypted);
+              }
             }
           })();
         },
@@ -232,12 +265,26 @@ export class Com {
                     });
                   }
                 } else if (data.a === "key4") {
+                  const secret = self.pendingSecret[callsign];
                   const decrypted = await decrypt(
-                    self.pendingSecret[callsign],
+                    secret,
                     data.iv,
                     data.encrypted
                   );
+
+                  self.addPipe(callsign, chan.plugId!, chan, callsign, secret);
+
                   resolve(decrypted === "greetings");
+                } else if (data.a === "msg") {
+                  if (self.pipes[data.plugId]) {
+                    const { secret } = self.pipes[data.plugId];
+                    const decrypted = await decrypt(
+                      secret,
+                      data.iv,
+                      data.encrypted
+                    );
+                    console.log("decrypted", decrypted);
+                  }
                 }
               })();
             },
@@ -271,10 +318,24 @@ export class Com {
       }
     });
   }
-}
 
-class Session {
-  private pipes: [Chan, PlugId][] = [];
+  async message(callsign: string, text: string) {
+    console.log(this.pipes);
+    return Promise.all(
+      (this.pipeConnections[callsign] ?? []).flatMap(async (con) => {
+        if (this.pipes[con]) {
+          const { chan, topic, secret } = this.pipes[con];
+          const [iv, encrypted] = await encrypt(secret, text);
+          await chan.send("p", topic, {
+            a: "msg",
+            plugId: con,
+            iv,
+            encrypted,
+          });
+        }
+      })
+    );
+  }
 }
 
 class Chan {
