@@ -82,6 +82,16 @@ export class Com {
     topic: string,
     secret: CryptoKey
   ) {
+    console.log(
+      "  ** addPipe",
+      this.callsign,
+      "::",
+      callsign,
+      "->",
+      plugId,
+      "::",
+      topic
+    );
     this.pipeConnections[callsign] = this.pipeConnections[callsign] || [];
     this.pipeConnections[callsign].push(plugId);
 
@@ -95,6 +105,82 @@ export class Com {
         message(data: any) {
           (async () => {
             if (data.a === "key1") {
+              const chan = new Chan(
+                self.steps.concat([
+                  {
+                    message(data: any) {
+                      (async () => {
+                        if (data.a === "key3") {
+                          const secret = self.pendingSecret[chan.plugId!];
+                          const decrypted = JSON.parse(
+                            await decrypt(secret, data.iv, data.encrypted)
+                          );
+                          self.steps.forEach((step) =>
+                            step.key3?.decrypted?.()
+                          );
+
+                          const verifyKeyString = await fetchKey(
+                            decrypted.callsign
+                          );
+                          self.steps.forEach((step) =>
+                            step.key3?.publicKeyFetched?.()
+                          );
+
+                          const verifyKey = await importPublicSignKey(
+                            verifyKeyString
+                          );
+                          self.steps.forEach((step) =>
+                            step.key3?.publicSignKeyImported?.()
+                          );
+                          const exportedSecret = await exportSecretKey(secret);
+                          self.steps.forEach((step) =>
+                            step.key3?.secretKeyExported?.()
+                          );
+                          const verified = await verify(
+                            verifyKey,
+                            decrypted.signed,
+                            exportedSecret
+                          );
+                          self.steps.forEach((step) =>
+                            step.key3?.keyVerified?.(verified)
+                          );
+
+                          const [iv, encrypted] = await encrypt(
+                            secret,
+                            "greetings"
+                          );
+
+                          self.addPipe(
+                            decrypted.callsign,
+                            chan.plugId!,
+                            chan,
+                            chan.plugId!,
+                            secret
+                          );
+
+                          await chan.send("p", data.plugId, {
+                            a: "key4",
+                            plugId: chan.plugId,
+                            iv,
+                            encrypted,
+                          });
+                        } else if (data.a === "msg") {
+                          if (self.pipes[data.plugId]) {
+                            const { secret } = self.pipes[data.plugId];
+                            const decrypted = await decrypt(
+                              secret,
+                              data.iv,
+                              data.encrypted
+                            );
+                            console.log("decrypted", decrypted);
+                          }
+                        }
+                      })();
+                    },
+                  },
+                ])
+              );
+              await chan.onPlugged;
               const publicDeriveKey = await importPublicDeriveKey(
                 data.publicDeriveKey
               );
@@ -117,60 +203,13 @@ export class Com {
               );
               self.steps.forEach((step) => step.key1?.publicKeyExported?.());
 
-              self.pendingSecret[data.plugId] = secret;
-              await self.mainChan.send("p", data.plugId, {
+              self.pendingSecret[chan.plugId!] = secret;
+              await chan.send("p", data.plugId, {
                 a: "key2",
+                plugId: chan.plugId,
                 publicDeriveKey: myPublicDeriveKey,
                 signed: signed,
               });
-            } else if (data.a === "key3") {
-              const secret = self.pendingSecret[data.plugId];
-              const decrypted = JSON.parse(
-                await decrypt(secret, data.iv, data.encrypted)
-              );
-              self.steps.forEach((step) => step.key3?.decrypted?.());
-
-              const verifyKeyString = await fetchKey(decrypted.callsign);
-              self.steps.forEach((step) => step.key3?.publicKeyFetched?.());
-
-              const verifyKey = await importPublicSignKey(verifyKeyString);
-              self.steps.forEach((step) =>
-                step.key3?.publicSignKeyImported?.()
-              );
-              const exportedSecret = await exportSecretKey(secret);
-              self.steps.forEach((step) => step.key3?.secretKeyExported?.());
-              const verified = await verify(
-                verifyKey,
-                decrypted.signed,
-                exportedSecret
-              );
-              self.steps.forEach((step) => step.key3?.keyVerified?.(verified));
-
-              const [iv, encrypted] = await encrypt(secret, "greetings");
-
-              self.addPipe(
-                decrypted.callsign,
-                data.plugId,
-                self.mainChan,
-                data.plugId,
-                secret
-              );
-
-              await self.mainChan.send("p", data.plugId, {
-                a: "key4",
-                iv,
-                encrypted,
-              });
-            } else if (data.a === "msg") {
-              if (self.pipes[data.plugId]) {
-                const { secret } = self.pipes[data.plugId];
-                const decrypted = await decrypt(
-                  secret,
-                  data.iv,
-                  data.encrypted
-                );
-                console.log("decrypted", decrypted);
-              }
             }
           })();
         },
@@ -232,7 +271,7 @@ export class Com {
                     publicDeriveKey,
                     privateDeriveKey
                   );
-                  self.pendingSecret[callsign] = secret;
+                  self.pendingSecret[data.plugId] = secret;
                   self.steps.forEach((step) => step.key2?.secretDerived?.());
                   const exportedSecret = await exportSecretKey(secret);
                   self.steps.forEach((step) => step.key2?.secretExported?.());
@@ -257,7 +296,7 @@ export class Com {
                       })
                     );
 
-                    await chan.send("p", callsign, {
+                    await chan.send("p", data.plugId, {
                       plugId: chan.plugId,
                       a: "key3",
                       iv,
@@ -265,14 +304,20 @@ export class Com {
                     });
                   }
                 } else if (data.a === "key4") {
-                  const secret = self.pendingSecret[callsign];
+                  const secret = self.pendingSecret[data.plugId];
                   const decrypted = await decrypt(
                     secret,
                     data.iv,
                     data.encrypted
                   );
 
-                  self.addPipe(callsign, chan.plugId!, chan, callsign, secret);
+                  self.addPipe(
+                    callsign,
+                    data.plugId,
+                    chan,
+                    data.plugId,
+                    secret
+                  );
 
                   resolve(decrypted === "greetings");
                 } else if (data.a === "msg") {
@@ -320,7 +365,7 @@ export class Com {
   }
 
   async message(callsign: string, text: string) {
-    console.log(this.pipes);
+    console.log("this.pipes", this.pipes);
     return Promise.all(
       (this.pipeConnections[callsign] ?? []).flatMap(async (con) => {
         if (this.pipes[con]) {
