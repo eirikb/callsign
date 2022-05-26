@@ -2,6 +2,8 @@
  * This file handles all of Callsign communication and logic.
  * Does not depend on any kind of library. Can be plugged into any browser or
  * any system with Web Crypto API such as Deno.
+ *
+ * Global dependencies: Web Crypto and WebSocket.
  */
 
 import {
@@ -57,7 +59,14 @@ export type Step = {
     signed?(): void;
     keyVerified?(verified: boolean): void;
   };
+  hail?: {
+    plugged?(): void;
+    publicVerifyKeyImported?(): void;
+    deriveKeyGenerated?(): void;
+    publicKeyExported?(): void;
+  };
   message?: (data: any) => void | undefined;
+  decrypted?: (callsign: string, data: any) => void | undefined;
   send?: (action: "p" | "s", topic: string, data: any) => void | undefined;
   onError?(error: Error): void;
 };
@@ -68,7 +77,12 @@ export class Com {
   private privateDeriveKeys: { [callsign: string]: CryptoKey } = {};
   private pendingSecret: { [plugId: PlugId]: CryptoKey } = {};
   private pipes: {
-    [plugId: PlugId]: { chan: Chan; topic: string; secret: CryptoKey };
+    [plugId: PlugId]: {
+      callsign: string;
+      chan: Chan;
+      topic: string;
+      secret: CryptoKey;
+    };
   } = {};
   private pipeConnections: { [callsign: string]: PlugId[] } = {};
   private pendingVerifyKey: { [callsign: string]: CryptoKey } = {};
@@ -82,20 +96,10 @@ export class Com {
     topic: string,
     secret: CryptoKey
   ) {
-    console.log(
-      "  ** addPipe",
-      this.callsign,
-      "::",
-      callsign,
-      "->",
-      plugId,
-      "::",
-      topic
-    );
     this.pipeConnections[callsign] = this.pipeConnections[callsign] || [];
     this.pipeConnections[callsign].push(plugId);
 
-    this.pipes[plugId] = { chan, topic, secret };
+    this.pipes[plugId] = { callsign, chan, topic, secret };
   }
 
   constructor() {
@@ -154,7 +158,7 @@ export class Com {
                             decrypted.callsign,
                             chan.plugId!,
                             chan,
-                            chan.plugId!,
+                            data.plugId,
                             secret
                           );
 
@@ -166,13 +170,16 @@ export class Com {
                           });
                         } else if (data.a === "msg") {
                           if (self.pipes[data.plugId]) {
-                            const { secret } = self.pipes[data.plugId];
+                            const { secret, callsign } =
+                              self.pipes[data.plugId];
                             const decrypted = await decrypt(
                               secret,
                               data.iv,
                               data.encrypted
                             );
-                            console.log("decrypted", decrypted);
+                            self.steps.forEach((step) =>
+                              step.decrypted?.(callsign, decrypted)
+                            );
                           }
                         }
                       })();
@@ -328,7 +335,9 @@ export class Com {
                       data.iv,
                       data.encrypted
                     );
-                    console.log("decrypted", decrypted);
+                    self.steps.forEach((step) =>
+                      step.decrypted?.(callsign, decrypted)
+                    );
                   }
                 }
               })();
@@ -341,20 +350,17 @@ export class Com {
         fetchKey(callsign),
         chan.onPlugged,
       ]);
+      self.steps.forEach((step) => step.hail?.plugged?.());
       if (verifyKeyString) {
-        // info(chat, `Importing public verify key...`, callsign);
         this.pendingVerifyKey[callsign] = await importPublicSignKey(
           verifyKeyString
         );
-        // info(chat, "Generating new derive key...", callsign);
+        self.steps.forEach((step) => step.hail?.publicVerifyKeyImported?.());
         const deriveKeys = await generateDeriveKeys();
-        // info(chat, "Exporting public derive key...", callsign);
+        self.steps.forEach((step) => step.hail?.deriveKeyGenerated?.());
         const publicDeriveKey = await exportPublicKey(deriveKeys.publicKey);
-        // console.log("KEY!?!", publicDeriveKey);
-        // info(chat, "Sending public derive key...", callsign);
-        if (deriveKeys.privateKey) {
-          this.privateDeriveKeys[callsign] = deriveKeys.privateKey;
-        }
+        self.steps.forEach((step) => step.hail?.publicKeyExported?.());
+        this.privateDeriveKeys[callsign] = deriveKeys.privateKey!;
         chan.send("p", callsign, {
           a: "key1",
           plugId: chan.plugId,
@@ -365,7 +371,6 @@ export class Com {
   }
 
   async message(callsign: string, text: string) {
-    console.log("this.pipes", this.pipes);
     return Promise.all(
       (this.pipeConnections[callsign] ?? []).flatMap(async (con) => {
         if (this.pipes[con]) {
